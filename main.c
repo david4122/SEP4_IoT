@@ -7,8 +7,8 @@
 #include <avr/io.h>
 #include <stdio.h>
 #include <ihal.h>
-#include <FreeRTOS/src/ATMEGA_FreeRTOS.h>
-#include <FreeRTOS/src/task.h>
+#include <ATMEGA_FreeRTOS.h>
+#include <task.h>
 
 //Drivers -------------------------------------------------------------------------------
 #include <stdio_driver.h>
@@ -17,9 +17,9 @@
 #include <hih8120.h> //Need to be init();
 #include <rc_servo.h> //Need to be init();
 #include <lora_driver.h> //Need to be init();
-#include <FreeRTOS/src/semphr.h>
-#include <FreeRTOS/src/message_buffer.h>
-#include <FreeRTOS/src/event_groups.h>
+#include <semphr.h>
+#include <message_buffer.h>
+#include <event_groups.h>
 
 
 //Task Definition -------------------------------------------------------------------
@@ -31,7 +31,7 @@ void up_link_handler(void * param);
 void smart_green_smart_house(void * param);
 
 //Define Semaphores/Mutexes/EventGroups/MessageBuffers-------------------------------------------------------
-SemaphoreHandle_t v_mutex;
+//SemaphoreHandle_t v_mutex;
 MessageBufferHandle_t down_link_message_buffer; //  those needs to be created
 MessageBufferHandle_t up_link_message_buffer;
 EventGroupHandle_t event_group;
@@ -43,60 +43,54 @@ void lora_handler_create(UBaseType_t lora_handler_task_priority);
 
 
 /*-----------------------------------------------------------------------------------------------------------*/
-void init_task(void * param) {
+
+int main(void)
+{
+	puts("Program starting...");
+	TaskHandle_t xHandle = NULL;
+
+	/* Create the task, storing the handle. */
+	xTaskCreate(
+		init_task,       /* Function that implements the task. */
+		"Initializing the system",          /* Text name for the task. */
+		configMINIMAL_STACK_SIZE,      /* Stack size in words, not bytes. */
+		(void*) 1,    /* Parameter passed into the task. */
+		tskIDLE_PRIORITY,/* Priority at which the task is created. */
+		&xHandle );      /* Used to pass out the created task's handle. */
+
+	vTaskStartScheduler();
+	
+    /* Replace with your application code */
+    while (1) {}
+}
+
+void init_task(void* param) {
 	#if (configUSE_APPLICATION_TASK_TAG == 1)
 	// Set task no to be used for tracing with R2R-Network
-	vTaskSetApplicationTaskTag( NULL, ( void * ) 1 );
+	vTaskSetApplicationTaskTag(NULL, (void*) 1 );
 	#endif
-	for(;;) {
 		
-		 trace_init();
-		 stdio_create(ser_USART0);
-		 lora_driver_create(1, NULL);
-		 lora_handler_create(3);
-		 
-		 if ( v_mutex == NULL ) {
-			 v_mutex = xSemaphoreCreateMutex();
-			 if ( ( v_mutex ) != NULL ) {
-				 xSemaphoreGive( ( xTestSemaphore ) );
-			 }
-		 }
+	trace_init();
+	stdio_create(ser_USART0);
+	lora_driver_create(1, NULL);
+	lora_handler_create(3);
 		
+	if ( HIH8120_OK == hih8120_create() )
+	{
+		// Driver created OK
+		// Always check what hih8120_create() returns
 	}
+	
+	// TODO init all sensors
+	
+	// TODO start all tasks
+	
+	
+	/* The task was created.  Use the task's handle to delete the task. */
+	vTaskDelete(NULL);
 }
 
 //Creation of Tasks/Semaphores and etc.. ---------------------------------------------------------
 void create( void )
 {
-	BaseType_t xReturned;
-	TaskHandle_t xHandle = NULL;
-
-	/* Create the task, storing the handle. */
-	xReturned = xTaskCreate(
-	init_task(),       /* Function that implements the task. */
-	"Initializing the system",          /* Text name for the task. */
-	configMINIMAL_STACK_SIZE,      /* Stack size in words, not bytes. */
-	( void *  ) 1,    /* Parameter passed into the task. */
-	tskIDLE_PRIORITY,/* Priority at which the task is created. */
-	&xHandle );      /* Used to pass out the created task's handle. */
-	if( xReturned == pdPASS )
-	{
-		/* The task was created.  Use the task's handle to delete the task. */
-		vTaskDelete( xHandle );
-	}
 }
-
-int main(void)
-{
-	
-	create();
-	puts("Program started!");
-	vTaskStartScheduler();
-	
-	
-    /* Replace with your application code */
-    while (1) 
-    {
-    }
-}
-
