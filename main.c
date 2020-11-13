@@ -20,11 +20,12 @@
 #include <semphr.h>
 #include <message_buffer.h>
 #include <event_groups.h>
+#include <temperature_task.h>
 
 
 //Task Definition -------------------------------------------------------------------
 void init_task(void * param); //CREATE();
-void temp_humid_sensor(void * param);
+void temp_sensor(void * param);
 void window_controller(void * param);
 void down_link_handler(void * param);
 void up_link_handler(void * param);
@@ -38,25 +39,21 @@ EventGroupHandle_t event_group;
 
 //LoRaWAN Handler---------------------------------------------------------------------
 void lora_handler_create(UBaseType_t lora_handler_task_priority);
-//Check Your TASKS on Team (Sprints). Should we create our own Handler????????
-
-
-
+//yes
 /*-----------------------------------------------------------------------------------------------------------*/
 
 int main(void)
 {
 	puts("Program starting...");
 	TaskHandle_t xHandle = NULL;
-
 	/* Create the task, storing the handle. */
 	xTaskCreate(
-		init_task,       /* Function that implements the task. */
-		"Initializing the system",          /* Text name for the task. */
-		configMINIMAL_STACK_SIZE,      /* Stack size in words, not bytes. */
-		(void*) 1,    /* Parameter passed into the task. */
-		tskIDLE_PRIORITY,/* Priority at which the task is created. */
-		&xHandle );      /* Used to pass out the created task's handle. */
+					init_task,       /* Function that implements the task. */
+					"Initializing the system",          /* Text name for the task. */
+					configMINIMAL_STACK_SIZE,      /* Stack size in words, not bytes. */
+					(void*) 1,    /* Parameter passed into the task. */
+					tskIDLE_PRIORITY,/* Priority at which the task is created. */
+					&xHandle );      /* Used to pass out the created task's handle. */
 
 	vTaskStartScheduler();
 	
@@ -74,23 +71,28 @@ void init_task(void* param) {
 	stdio_create(ser_USART0);
 	lora_driver_create(1, NULL);
 	lora_handler_create(3);
-		
+	
+	hih8120_create();
 	if ( HIH8120_OK == hih8120_create() )
 	{
-		// Driver created OK
-		// Always check what hih8120_create() returns
+		puts("Temperature Driver Successfully Created.")
 	}
+	printf("Temperature Task Driver Return Code: %d\n", hih8120_create());
+	
+	
+	xTaskCreate(
+					get_temp(),       /* Function that implements the task. */
+					"getting temp",          /* Text name for the task. */
+					configMINIMAL_STACK_SIZE,      /* Stack size in words, not bytes. */
+					(void*) 1,    /* Parameter passed into the task. */
+					tskIDLE_PRIORITY,/* Priority at which the task is created. */
+					&xHandle );      /* Used to pass out the created task's handle. */
 	
 	// TODO init all sensors
 	
 	// TODO start all tasks
 	
 	
-	/* The task was created.  Use the task's handle to delete the task. */
+	
 	vTaskDelete(NULL);
-}
-
-//Creation of Tasks/Semaphores and etc.. ---------------------------------------------------------
-void create( void )
-{
 }
