@@ -14,13 +14,13 @@
 #include <stdio_driver.h>
 #include <serial.h>
 #include <FreeRTOSTraceDriver.h>
-#include <hih8120.h> //Need to be init();
+//#include <hih8120.h> //Need to be init();
 #include <rc_servo.h> //Need to be init();
 #include <lora_driver.h> //Need to be init();
 #include <semphr.h>
 #include <message_buffer.h>
 #include <event_groups.h>
-#include <temperature_task.h>
+#include "temperature_task.h"
 
 
 //Task Definition -------------------------------------------------------------------
@@ -41,11 +41,14 @@ EventGroupHandle_t event_group;
 void lora_handler_create(UBaseType_t lora_handler_task_priority);
 //yes
 /*-----------------------------------------------------------------------------------------------------------*/
+/* xHandle was only being used in main method. Moving it above main :) */
+TaskHandle_t xHandle = NULL;
+
 
 int main(void)
 {
-	puts("Program starting...");
-	TaskHandle_t xHandle = NULL;
+	puts("Program starting..."); // This is useless, atmel studio can't print to the console.
+	
 	/* Create the task, storing the handle. */
 	xTaskCreate(
 					init_task,       /* Function that implements the task. */
@@ -62,6 +65,7 @@ int main(void)
 }
 
 void init_task(void* param) {
+	
 	#if (configUSE_APPLICATION_TASK_TAG == 1)
 	// Set task no to be used for tracing with R2R-Network
 	vTaskSetApplicationTaskTag(NULL, (void*) 1 );
@@ -72,12 +76,13 @@ void init_task(void* param) {
 	lora_driver_create(1, NULL);
 	lora_handler_create(3);
 	
-	hih8120_create();
-	if ( HIH8120_OK == hih8120_create() )
+	hih8120_driverReturnCode_t initTempSensor = create_tempSensor();
+	
+	if ( HIH8120_OK == initTempSensor )
 	{
-		puts("Temperature Driver Successfully Created.")
+		puts("Temperature Driver Successfully Created.");
 	}
-	printf("Temperature Task Driver Return Code: %d\n", hih8120_create());
+	printf("Temperature Task Driver Return Code: %d\n", initTempSensor);
 	
 	
 	xTaskCreate(

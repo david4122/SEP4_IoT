@@ -5,19 +5,14 @@
  *  Author: Matey Matev
  */ 
 
-#include <temperature_task.h>
+#include "temperature_task.h"
 
-hih8120_driverReturnCode_t hih8120_create() {
-	hih8120_create();
-	if ( HIH8120_OK == hih8120_create() )
-	{
-		puts("Temperature Driver Successfully Created.")
-	}
-	
+hih8120_driverReturnCode_t create_tempSensor() {
+	return hih8120_create();
 }
 
-hih8120_driverReturnCode_t hih8120_destroy() {
-	hih8120_destroy();
+hih8120_driverReturnCode_t destroy_tempSensor() {
+	return hih8120_destroy();
 }
 
 uint16_t get_temp() {
