@@ -26,6 +26,8 @@ float getTemperatureFromSensor()
 	}
 	vTaskDelay(pdMS_TO_TICKS(100));	
 	temperature = hih8120_getTemperature_x10();
-	printf("Temperature: %.2f",temperature);
+	int dec = temperature%10;
+	temperature = temperature/10;
+	printf("Temperature: %d.%d \n",temperature,dec);
 	return temperature;
 }
