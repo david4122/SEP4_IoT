@@ -12,9 +12,7 @@
 #include <stdint.h>
 #include <hih8120.h>
 
-float hih8120_getHumidity();
-float hih8120_getTemperature();
-void temperature_measure_task(void * p);
+float getTemperatureFromSensor();
 
 
 #endif /* TEMPERATURE_TASK_H_ */

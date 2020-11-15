@@ -19,12 +19,13 @@
 #include <FreeRTOSTraceDriver.h>
 #include <stdio_driver.h>
 #include <serial.h>
+#include "temperature_task.h"
 
 // Needed for LoRaWAN
 #include <lora_driver.h>
 
 // define two Tasks
-void task1( void *pvParameters );
+void getTemperature( void *pvParameters );
 void task2( void *pvParameters );
 
 // define semaphore handle
@@ -49,16 +50,8 @@ void create_tasks_and_semaphores(void)
 	}
 
 	xTaskCreate(
-	task1
-	,  (const portCHAR *)"Task1"  // A name just for humans
-	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
-	,  NULL
-	,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-	,  NULL );
-
-	xTaskCreate(
-	task2
-	,  (const portCHAR *)"Task2"  // A name just for humans
+	getTemperature
+	,  (const portCHAR *)"Get Temperature"  // A name just for humans
 	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
 	,  NULL
 	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
@@ -66,15 +59,10 @@ void create_tasks_and_semaphores(void)
 }
 
 /*-----------------------------------------------------------*/
-void task1( void *pvParameters )
+void getTemperature( void *pvParameters )
 {
-	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	// Set task no to be used for tracing with R2R-Network
-	vTaskSetApplicationTaskTag( NULL, ( void * ) 1 );
-	#endif
-
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = 500/portTICK_PERIOD_MS; // 500 ms
+	const TickType_t xFrequency = 5000/portTICK_PERIOD_MS; // 500 ms
 
 	// Initialise the xLastWakeTime variable with the current time.
 	xLastWakeTime = xTaskGetTickCount();
@@ -82,30 +70,8 @@ void task1( void *pvParameters )
 	for(;;)
 	{
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
-		puts("Task1"); // stdio functions are not reentrant - Should normally be protected by MUTEX
-		PORTA ^= _BV(PA0);
-	}
-}
-
-/*-----------------------------------------------------------*/
-void task2( void *pvParameters )
-{
-	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	// Set task no to be used for tracing with R2R-Network
-	vTaskSetApplicationTaskTag( NULL, ( void * ) 2 );
-	#endif
-
-	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = 1000/portTICK_PERIOD_MS; // 1000 ms
-
-	// Initialise the xLastWakeTime variable with the current time.
-	xLastWakeTime = xTaskGetTickCount();
-
-	for(;;)
-	{
-		vTaskDelayUntil( &xLastWakeTime, xFrequency );
-		puts("Task2"); // stdio functions are not reentrant - Should normally be protected by MUTEX
-		PORTA ^= _BV(PA7);
+		puts("Calling getTemperature method.\n"); // stdio functions are not reentrant - Should normally be protected by MUTEX
+		getTemperatureFromSensor();
 	}
 }
 
@@ -120,6 +86,11 @@ void initialiseSystem()
 	stdio_create(ser_USART0);
 	// Let's create some tasks
 	create_tasks_and_semaphores();
+	
+	if ( HIH8120_OK != hih8120_create())
+	{
+		printf("Temperature driver was failed to initialized. Result: %s\n",hih8120_create());
+	}
 
 	// vvvvvvvvvvvvvvvvv BELOW IS LoRaWAN initialisation vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 	// Initialise the HAL layer and use 5 for LED driver priority
