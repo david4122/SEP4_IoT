@@ -1,51 +1,60 @@
 /*
 * main.c
-* Author : IHA
-*
-* Example main file including LoRaWAN setup
-* Just for inspiration :)
+* Created: 04/11/2020 8:22:59 AM
+* Author: IoT Group
 */
 
+/*Drivers, FreeRTOS, LoRaWAN definition ------------------*/
 #include <stdio.h>
 #include <avr/io.h>
 #include <avr/sfr_defs.h>
-
-//#include <hal_defs.h>
+#include <hal_defs.h>
 #include <ihal.h>
-
 #include <ATMEGA_FreeRTOS.h>
-#include <semphr.h>
-
 #include <FreeRTOSTraceDriver.h>
+
+#include <semphr.h>
+#include <event_groups.h>
 #include <stdio_driver.h>
 #include <serial.h>
+
 #include "temperature_task.h"
 
-// Needed for LoRaWAN
 #include <lora_driver.h>
 
-// define two Tasks
+
+/*Task definition ------------------------------------------------------------------*/
 void getTemperature( void *pvParameters );
+
 void task2( void *pvParameters );
 
-// define semaphore handle
+/*Handles Definition ---------------------------------------------------------------*/
 SemaphoreHandle_t xTestSemaphore;
+EventGroupHandle_t measurement_event_group;
 
-// Prototype for LoRaWAN handler
 void lora_handler_create(UBaseType_t lora_handler_task_priority);
 
-/*-----------------------------------------------------------*/
+/*----------------------------------------------------------------------------------*/
 void create_tasks_and_semaphores(void)
 {
-	// Semaphores are useful to stop a Task proceeding, where it should be paused to wait,
-	// because it is sharing a resource, such as the Serial port.
-	// Semaphores should only be used whilst the scheduler is running, but we can set it up here.
+	/* Semaphores are useful to stop a Task proceeding, where it should be paused to wait,
+	* because it is sharing a resource, such as the Serial port.
+	* Semaphores should only be used whilst the scheduler is running, but we can set it up here.*/
 	if ( xTestSemaphore == NULL )  // Check to confirm that the Semaphore has not already been created.
 	{
-		xTestSemaphore = xSemaphoreCreateMutex();  // Create a mutex semaphore.
+		xTestSemaphore = xSemaphoreCreateMutex(); 
 		if ( ( xTestSemaphore ) != NULL )
 		{
 			xSemaphoreGive( ( xTestSemaphore ) );  // Make the mutex available for use, by initially "Giving" the Semaphore.
+		}
+	}
+	
+	if (measurement_event_group == NULL) //Check to confirm that it is not already created.
+	{
+		measurement_event_group = xEventGroupCreate();
+		if ((measurement_event_group) != NULL)
+		{
+			xEventGroupClearBits(); //Clearing bits to make sure there's no dump in it
 		}
 	}
 
