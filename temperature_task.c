@@ -29,5 +29,6 @@ float getTemperatureFromSensor()
 	int dec = temperature%10;
 	temperature = temperature/10;
 	printf("Temperature: %d.%d \n",temperature,dec);
+	
 	return temperature;
 }
