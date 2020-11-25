@@ -19,6 +19,7 @@
 #include <serial.h>
 
 #include "temperature_task.h"
+#include "humidity_task.h"
 
 #include <lora_driver.h>
 
@@ -37,34 +38,36 @@ void lora_handler_create(UBaseType_t lora_handler_task_priority);
 /*----------------------------------------------------------------------------------*/
 void create_tasks_and_semaphores(void)
 {
-	/* Semaphores are useful to stop a Task proceeding, where it should be paused to wait,
-	* because it is sharing a resource, such as the Serial port.
-	* Semaphores should only be used whilst the scheduler is running, but we can set it up here.*/
+	// Semaphores are useful to stop a Task proceeding, where it should be paused to wait,
+	// because it is sharing a resource, such as the Serial port.
+	// Semaphores should only be used whilst the scheduler is running, but we can set it up here.
 	if ( xTestSemaphore == NULL )  // Check to confirm that the Semaphore has not already been created.
 	{
-		xTestSemaphore = xSemaphoreCreateMutex(); 
+		xTestSemaphore = xSemaphoreCreateMutex();  // Create a mutex semaphore.
 		if ( ( xTestSemaphore ) != NULL )
 		{
 			xSemaphoreGive( ( xTestSemaphore ) );  // Make the mutex available for use, by initially "Giving" the Semaphore.
 		}
 	}
-	
-	if (measurement_event_group == NULL) //Check to confirm that it is not already created.
-	{
-		measurement_event_group = xEventGroupCreate();
-		if ((measurement_event_group) != NULL)
-		{
-			xEventGroupClearBits(); //Clearing bits to make sure there's no dump in it
-		}
-	}
 
 	xTaskCreate(
-	getTemperature
+	getTemperatureFromSensor_task
 	,  (const portCHAR *)"Get Temperature"  // A name just for humans
 	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
 	,  NULL
 	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 	,  NULL );
+	
+	//CO2
+	
+	xTaskCreate(
+	get_humidityFromSensor_task
+	,  (const portCHAR *)"Get Temperature"  // A name just for humans
+	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
+	,  NULL
+	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+	,  NULL );
+	
 }
 
 /*-----------------------------------------------------------*/

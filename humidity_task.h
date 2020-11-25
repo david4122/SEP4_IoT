@@ -7,4 +7,4 @@
 #include <stdint.h>
 #include <hih8120.h>
 
-float get_humidityFromSensor();
+void get_humidityFromSensor_task(void *PvParameters);

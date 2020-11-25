@@ -132,8 +132,8 @@ void lora_handler_task( void *pvParameters )
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
 
 		// Some dummy payload
-		uint16_t hum = 12345; // Dummy humidity
-		int16_t temp = getTemperatureFromSensor(); // Dummy temp
+		uint16_t hum = sd_getHumid(); // Dummy humidity
+		int16_t temp = sd_getTemp(); // Dummy temp
 		uint16_t co2_ppm = 1050; // Dummy CO2
 
 		_uplink_payload.bytes[0] = hum >> 8;
