@@ -22,6 +22,7 @@
 #include <serial.h>
 
 #include "temperature_task.h"
+#include "humidity_task.h"
 #include "CO2Sensor.h"
 #include "light_task.h"
 
@@ -62,6 +63,15 @@ void create_tasks_and_semaphores(void)
 	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 	,  NULL );
 	
+	//CO2
+	
+	xTaskCreate(
+	get_humidityFromSensor_task
+	,  (const portCHAR *)"Get Temperature"  // A name just for humans
+	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
+	,  NULL
+	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+	,  NULL );
 	
 }
 
