@@ -1,98 +1,125 @@
 /*
- * smart_green_smart_house_iot.c
- * Created: 04/11/2020 8:22:59 AM
- * Author : Matey Matev //ADD YOUR NAMES HERE.
- */ 
+* main.c
+* Created: 04/11/2020 8:22:59 AM
+* Author: IoT Group
+*/
 
-#include <avr/io.h>
+/*Drivers, FreeRTOS, LoRaWAN definition ------------------*/
 #include <stdio.h>
+#include <avr/io.h>
+#include <avr/sfr_defs.h>
+#include <hal_defs.h>
 #include <ihal.h>
 #include <ATMEGA_FreeRTOS.h>
-#include <task.h>
+#include <FreeRTOSTraceDriver.h>
 
-//Drivers -------------------------------------------------------------------------------
+#include <semphr.h>
+#include <event_groups.h>
 #include <stdio_driver.h>
 #include <serial.h>
-#include <FreeRTOSTraceDriver.h>
-#include <hih8120.h> //Need to be init();
-#include <rc_servo.h> //Need to be init();
-#include <lora_driver.h> //Need to be init();
-#include <semphr.h>
-#include <message_buffer.h>
-#include <event_groups.h>
-#include <temperature_task.h>
+
+#include "temperature_task.h"
+
+#include <lora_driver.h>
 
 
-//Task Definition -------------------------------------------------------------------
-void init_task(void * param); //CREATE();
-void temp_sensor(void * param);
-void window_controller(void * param);
-void down_link_handler(void * param);
-void up_link_handler(void * param);
-void smart_green_smart_house(void * param);
+/*Task definition ------------------------------------------------------------------*/
+void getTemperature( void *pvParameters );
 
-//Define Semaphores/Mutexes/EventGroups/MessageBuffers-------------------------------------------------------
-//SemaphoreHandle_t v_mutex;
-MessageBufferHandle_t down_link_message_buffer; //  those needs to be created
-MessageBufferHandle_t up_link_message_buffer;
-EventGroupHandle_t event_group;
+void task2( void *pvParameters );
 
-//LoRaWAN Handler---------------------------------------------------------------------
+/*Handles Definition ---------------------------------------------------------------*/
+SemaphoreHandle_t xTestSemaphore;
+EventGroupHandle_t measurement_event_group;
+
 void lora_handler_create(UBaseType_t lora_handler_task_priority);
-//yes
-/*-----------------------------------------------------------------------------------------------------------*/
 
+/*----------------------------------------------------------------------------------*/
+void create_tasks_and_semaphores(void)
+{
+	/* Semaphores are useful to stop a Task proceeding, where it should be paused to wait,
+	* because it is sharing a resource, such as the Serial port.
+	* Semaphores should only be used whilst the scheduler is running, but we can set it up here.*/
+	if ( xTestSemaphore == NULL )  // Check to confirm that the Semaphore has not already been created.
+	{
+		xTestSemaphore = xSemaphoreCreateMutex(); 
+		if ( ( xTestSemaphore ) != NULL )
+		{
+			xSemaphoreGive( ( xTestSemaphore ) );  // Make the mutex available for use, by initially "Giving" the Semaphore.
+		}
+	}
+	
+	if (measurement_event_group == NULL) //Check to confirm that it is not already created.
+	{
+		measurement_event_group = xEventGroupCreate();
+		if ((measurement_event_group) != NULL)
+		{
+			xEventGroupClearBits(); //Clearing bits to make sure there's no dump in it
+		}
+	}
+
+	xTaskCreate(
+	getTemperature
+	,  (const portCHAR *)"Get Temperature"  // A name just for humans
+	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
+	,  NULL
+	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+	,  NULL );
+}
+
+/*-----------------------------------------------------------*/
+void getTemperature( void *pvParameters )
+{
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = 5000/portTICK_PERIOD_MS; // 500 ms
+
+	// Initialise the xLastWakeTime variable with the current time.
+	xLastWakeTime = xTaskGetTickCount();
+
+	for(;;)
+	{
+		vTaskDelayUntil( &xLastWakeTime, xFrequency );
+		puts("Calling getTemperature method.\n"); // stdio functions are not reentrant - Should normally be protected by MUTEX
+		getTemperatureFromSensor();
+	}
+}
+
+/*-----------------------------------------------------------*/
+void initialiseSystem()
+{
+	// Set output ports for leds used in the example
+	DDRA |= _BV(DDA0) | _BV(DDA7);
+	// Initialise the trace-driver to be used together with the R2R-Network
+	trace_init();
+	// Make it possible to use stdio on COM port 0 (USB) on Arduino board - Setting 57600,8,N,1
+	stdio_create(ser_USART0);
+	// Let's create some tasks
+	create_tasks_and_semaphores();
+	
+	if ( HIH8120_OK != hih8120_create())
+	{
+		printf("Temperature driver was failed to initialized. Result: %s\n",hih8120_create());
+	}
+
+	// vvvvvvvvvvvvvvvvv BELOW IS LoRaWAN initialisation vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+	// Initialise the HAL layer and use 5 for LED driver priority
+	hal_create(5);
+	// Initialise the LoRaWAN driver without down-link buffer
+	lora_driver_create(1, NULL);
+	// Create LoRaWAN task and start it up with priority 3
+	lora_handler_create(3);
+}
+
+/*-----------------------------------------------------------*/
 int main(void)
 {
-	puts("Program starting...");
-	TaskHandle_t xHandle = NULL;
-	/* Create the task, storing the handle. */
-	xTaskCreate(
-					init_task,       /* Function that implements the task. */
-					"Initializing the system",          /* Text name for the task. */
-					configMINIMAL_STACK_SIZE,      /* Stack size in words, not bytes. */
-					(void*) 1,    /* Parameter passed into the task. */
-					tskIDLE_PRIORITY,/* Priority at which the task is created. */
-					&xHandle );      /* Used to pass out the created task's handle. */
+	initialiseSystem(); // Must be done as the very first thing!!
+	printf("Program Started!!\n");
+	vTaskStartScheduler(); // Initialise and run the freeRTOS scheduler. Execution should never return from here.
 
-	vTaskStartScheduler();
-	
-    /* Replace with your application code */
-    while (1) {}
-}
-
-void init_task(void* param) {
-	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	// Set task no to be used for tracing with R2R-Network
-	vTaskSetApplicationTaskTag(NULL, (void*) 1 );
-	#endif
-		
-	trace_init();
-	stdio_create(ser_USART0);
-	lora_driver_create(1, NULL);
-	lora_handler_create(3);
-	
-	hih8120_create();
-	if ( HIH8120_OK == hih8120_create() )
+	/* Replace with your application code */
+	while (1)
 	{
-		puts("Temperature Driver Successfully Created.")
 	}
-	printf("Temperature Task Driver Return Code: %d\n", hih8120_create());
-	
-	
-	xTaskCreate(
-					get_temp(),       /* Function that implements the task. */
-					"getting temp",          /* Text name for the task. */
-					configMINIMAL_STACK_SIZE,      /* Stack size in words, not bytes. */
-					(void*) 1,    /* Parameter passed into the task. */
-					tskIDLE_PRIORITY,/* Priority at which the task is created. */
-					&xHandle );      /* Used to pass out the created task's handle. */
-	
-	// TODO init all sensors
-	
-	// TODO start all tasks
-	
-	
-	
-	vTaskDelete(NULL);
 }
+

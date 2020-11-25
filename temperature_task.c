@@ -4,42 +4,40 @@
  * Created: 11/13/2020 12:55:59 PM
  *  Author: Matey Matev
  */ 
+#include "shared_data.h"
+#include "temperature_task.h"
+#include <hih8120.h>
+#include <ATMEGA_FreeRTOS.h>
+#include <stdio.h>
 
-#include <temperature_task.h>
+void temperature_task(void *pvParameters)
+{
+	uint16_t temperature = 0;
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = 900/portTICK_PERIOD_MS; //90ms
+	shared_data_t *p_sd = (shared_data_t*) pvParameters;
 
-hih8120_driverReturnCode_t hih8120_create() {
-	hih8120_create();
-	if ( HIH8120_OK == hih8120_create() )
-	{
-		puts("Temperature Driver Successfully Created.")
-	}
-	
-}
+	xLastWakeTime = xTaskGetTickCount();
 
-hih8120_driverReturnCode_t hih8120_destroy() {
-	hih8120_destroy();
-}
+	for(;;) {
 
-uint16_t get_temp() {
-	return hih8120_getHumidityPercent_x10();
-}
+		vTaskDelayUntil(&xLastWakeTime,xFrequency);
 
-float get_temp_flt() {
-	return hih8120_getTemperature();
-}
+		if(HIH8120_OK != hih8120_wakeup())
+		{
+			printf("Error in wake up temp sensor! %s\n", hih8120_wakeup());
+		}
+		vTaskDelay(pdMS_TO_TICKS(250));
 
-void temperature_measure_task(void * p) {
-	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	// Set task no to be used for tracing with R2R-Network
-	vTaskSetApplicationTaskTag(NULL, (void*) 1 );
-	#endif
-
-	for(;;)
-	{
-	hih8120_wakeup();
-	vTaskDelay(pdMS_TO_TICKS(50));
-	if (hih8120_isReady()) {
-		return hih8120_getTemperature_x10();
-	}
+		if(HIH8120_OK != hih8120_measure())
+		{
+			printf("Error in measure temp sensor! %s\n", hih8120_measure());
+		}
+		vTaskDelay(pdMS_TO_TICKS(100));	
+		temperature = hih8120_getTemperature_x10();
+		int dec = temperature%10;
+		temperature = temperature/10;
+		sd_setTemp(temperature);
+		printf("Temperature: %d.%d \n",temperature,dec);
 	}
 }
