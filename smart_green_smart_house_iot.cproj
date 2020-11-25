@@ -183,13 +183,40 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CO2Sensor.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="CO2Sensor.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="drivers\display_7seg.h">
       <SubType>compile</SubType>
     </Compile>
     <None Include="drivers\docs\example\loraWANHandler.c">
       <SubType>compile</SubType>
     </None>
+    <Compile Include="humidity_task.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="humidity_task.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="light_task.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="light_task.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="loraWANHandler.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="loraWANHandler.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="shared_data.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="shared_data.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="temperature_task.c">

@@ -13,11 +13,8 @@
 #include <status_leds.h>
 #include "temperature_task.h"
 #include "CO2Sensor.h"
+#include "loraWANHandler.h" //We get the appEUI and appKEY through the interface 
 
-
-// Parameters for OTAA join - You have got these in a mail from IHA
-#define LORA_appEUI "689DF9DF68156742"
-#define LORA_appKEY "B09F779D3DF66B89B996955E3B4ED977"
 
 static char _out_buf[100];
 
@@ -30,7 +27,7 @@ void lora_handler_create(UBaseType_t lora_handler_task_priority)
 	xTaskCreate(
 	lora_handler_task
 	,  (const portCHAR *)"LRHand"  // A name just for humans
-	,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack Highwater
+	,  configMINIMAL_STACK_SIZE+200  // This stack size can be checked & adjusted by reading the Stack High water
 	,  NULL
 	,  lora_handler_task_priority  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 	,  NULL );
@@ -122,7 +119,8 @@ void lora_handler_task( void *pvParameters )
 
 	_lora_setup();
 
-	_uplink_payload.len = 6;
+//THE ONE BELOW WAS 6, CHANGED IT TO 8 DUE TO THE BIGGER PAYLOAD. Dunno if it's gonna work thoe.
+	_uplink_payload.len = 8;
 	_uplink_payload.port_no = 2;
 
 	TickType_t xLastWakeTime;

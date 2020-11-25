@@ -88,9 +88,9 @@ uint16_t getLightFromSensor() {
 	if(rc == TSL2591_OK)
 	{
 		vTaskDelay(pdMS_TO_TICKS(60));
-		rc = tsl2591_fetchData(&ppm);
-		(if rc == TSL2591_OK) {
-			printf("Light Data : %d\r\n",ppm)
+		rc = tsl2591_fetchData(); //&ppm was here?
+		if( rc == TSL2591_OK) {
+			printf("Light Data : %d\r\n",ppm);
 				return ppm;
 		}
 
