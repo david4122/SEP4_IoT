@@ -37,11 +37,11 @@ uint16_t sd_getCo2(shared_data_t* self) {
 	return self->co2;
 }
 
-uint16_t sd_setHumid(shared_data_t* self) {
+uint16_t sd_getHumid(shared_data_t* self) {
 	return self->humid;
 }
 
-uint16_t sd_setLight(shared_data_t* self) {
+uint16_t sd_getLight(shared_data_t* self) {
 	return self->light;
 }
 
