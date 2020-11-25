@@ -12,6 +12,8 @@
 #include <lora_driver.h>
 #include <status_leds.h>
 #include "temperature_task.h"
+#include "CO2Sensor.h"
+
 
 // Parameters for OTAA join - You have got these in a mail from IHA
 #define LORA_appEUI "689DF9DF68156742"
@@ -132,10 +134,12 @@ void lora_handler_task( void *pvParameters )
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
 
 		// Some dummy payload
-		uint16_t hum = 12345; // Dummy humidity
-		int16_t temp = getTemperatureFromSensor(); // Dummy temp
-		uint16_t co2_ppm = 1050; // Dummy CO2
-		uint16_t ligth_ppm = getLightFromSensor();
+		uint16_t hum = sd_getHumid();
+		int16_t temp = sd_getTemp(); 
+		uint16_t co2_ppm = sd_getCo2();
+		uint16_t ligth_ppm = sd_getLight();
+	
+
 
 		_uplink_payload.bytes[0] = hum >> 8;
 		_uplink_payload.bytes[1] = hum & 0xFF;

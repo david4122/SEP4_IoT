@@ -5,41 +5,29 @@
  *  Author: Matey Matev
  */ 
 
-#include <temperature_task.h>
+#include "temperature_task.h"
+#include <hih8120.h>
+#include <ATMEGA_FreeRTOS.h>
+#include <stdio.h>
 
-hih8120_driverReturnCode_t hih8120_create() {
-	hih8120_create();
-	if ( HIH8120_OK == hih8120_create() )
-	{
-		puts("Temperature Driver Successfully Created.")
-	}
+float getTemperatureFromSensor()
+{
+	uint16_t temperature = 0;
 	
-}
-
-hih8120_driverReturnCode_t hih8120_destroy() {
-	hih8120_destroy();
-}
-
-uint16_t get_temp() {
-	return hih8120_getHumidityPercent_x10();
-}
-
-float get_temp_flt() {
-	return hih8120_getTemperature();
-}
-
-void temperature_measure_task(void * p) {
-	#if (configUSE_APPLICATION_TASK_TAG == 1)
-	// Set task no to be used for tracing with R2R-Network
-	vTaskSetApplicationTaskTag(NULL, (void*) 1 );
-	#endif
-
-	for(;;)
+	if(HIH8120_OK != hih8120_wakeup())
 	{
-	hih8120_wakeup();
-	vTaskDelay(pdMS_TO_TICKS(50));
-	if (hih8120_isReady()) {
-		return hih8120_getTemperature_x10();
+		printf("Error in wake up temp sensor! %s\n", hih8120_wakeup());
 	}
+	vTaskDelay(pdMS_TO_TICKS(250));
+	
+	if(HIH8120_OK != hih8120_measure())
+	{
+		printf("Error in measure temp sensor! %s\n", hih8120_measure());
 	}
+	vTaskDelay(pdMS_TO_TICKS(100));	
+	temperature = hih8120_getTemperature_x10();
+	int dec = temperature%10;
+	temperature = temperature/10;
+	printf("Temperature: %d.%d \n",temperature,dec);
+	return temperature;
 }
