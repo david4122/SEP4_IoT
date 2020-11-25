@@ -28,7 +28,7 @@
 
 
 /*Task definition ------------------------------------------*/
-void get_humid_task(void *pvParameters );
+
 void getCO2( void *pvParameters );
 void task2( void *pvParameters );
 
@@ -61,6 +61,7 @@ void create_tasks_and_semaphores(void)
 	,  NULL
 	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 	,  NULL );
+	
 	
 }
 

@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 
-void get_humidityFromSensor(void *pvParameters){
+void get_humidityFromSensor_task(void *pvParameters){
 	
 	float humidity = 0;
 	// print out for testing
