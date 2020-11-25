@@ -11,8 +11,10 @@
 
 #include <lora_driver.h>
 #include <status_leds.h>
+#include "loraWANHandler.h"
 
 #include "CO2Sensor.h" //We get the appEUI and appKEY through the interface 
+
 
 static char _out_buf[100];
 

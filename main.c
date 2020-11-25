@@ -103,11 +103,6 @@ void initialiseSystem()
 	// Let's create some tasks
 	create_tasks_and_semaphores();
 	
-	if ( HIH8120_OK != hih8120_create())
-	{
-		printf("Temperature driver was failed to initialized. Result: %s\n",hih8120_create());
-	}
-	
 	CO2_create();
 	
 
