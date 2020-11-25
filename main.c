@@ -19,14 +19,12 @@
 #include <FreeRTOSTraceDriver.h>
 #include <stdio_driver.h>
 #include <serial.h>
-#include "temperature_task.h"
 #include "CO2Sensor.h"
 
 // Needed for LoRaWAN
 #include <lora_driver.h>
 
 // define two Tasks
-void getTemperature( void *pvParameters );
 void getCO2( void *pvParameters );
 void task2( void *pvParameters );
 
@@ -50,14 +48,6 @@ void create_tasks_and_semaphores(void)
 			xSemaphoreGive( ( xTestSemaphore ) );  // Make the mutex available for use, by initially "Giving" the Semaphore.
 		}
 	}
-
-	xTaskCreate(
-	getTemperature
-	,  (const portCHAR *)"Get Temperature"  // A name just for humans
-	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
-	,  NULL
-	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-	,  NULL );
 	
 	xTaskCreate(
 	getCO2
