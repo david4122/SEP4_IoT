@@ -1,41 +1,43 @@
 /*
 * main.c
-* Created: 04/11/2020 8:22:59 AM
-* Author: IoT Group
+* Author : IHA
+*
+* Example main file including LoRaWAN setup
+* Just for inspiration :)
 */
 
-/*Drivers, FreeRTOS, LoRaWAN definition ------------------*/
 #include <stdio.h>
 #include <avr/io.h>
 #include <avr/sfr_defs.h>
-#include <hal_defs.h>
-#include <ihal.h>
-#include <ATMEGA_FreeRTOS.h>
-#include <FreeRTOSTraceDriver.h>
 
+//#include <hal_defs.h>
+#include <ihal.h>
+
+#include <ATMEGA_FreeRTOS.h>
 #include <semphr.h>
-#include <event_groups.h>
+
+#include <FreeRTOSTraceDriver.h>
 #include <stdio_driver.h>
 #include <serial.h>
-
 #include "temperature_task.h"
 #include "humidity_task.h"
+#include "CO2Sensor.h"
 
+// Needed for LoRaWAN
 #include <lora_driver.h>
 
-
-/*Task definition ------------------------------------------------------------------*/
+// define two Tasks
 void getTemperature( void *pvParameters );
-
+void getCO2( void *pvParameters );
 void task2( void *pvParameters );
 
-/*Handles Definition ---------------------------------------------------------------*/
+// define semaphore handle
 SemaphoreHandle_t xTestSemaphore;
-EventGroupHandle_t measurement_event_group;
 
+// Prototype for LoRaWAN handler
 void lora_handler_create(UBaseType_t lora_handler_task_priority);
 
-/*----------------------------------------------------------------------------------*/
+/*-----------------------------------------------------------*/
 void create_tasks_and_semaphores(void)
 {
 	// Semaphores are useful to stop a Task proceeding, where it should be paused to wait,
@@ -68,6 +70,13 @@ void create_tasks_and_semaphores(void)
 	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 	,  NULL );
 	
+	xTaskCreate(
+	getCO2
+	,  (const portCHAR *)"Get CO2"  // A name just for humans
+	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
+	,  NULL
+	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+	,  NULL );
 }
 
 /*-----------------------------------------------------------*/
@@ -76,7 +85,7 @@ void getTemperature( void *pvParameters )
 	TickType_t xLastWakeTime;
 	const TickType_t xFrequency = 5000/portTICK_PERIOD_MS; // 500 ms
 
-	// Initialise the xLastWakeTime variable with the current time.
+	// Initialize the xLastWakeTime variable with the current time.
 	xLastWakeTime = xTaskGetTickCount();
 
 	for(;;)
@@ -84,6 +93,22 @@ void getTemperature( void *pvParameters )
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
 		puts("Calling getTemperature method.\n"); // stdio functions are not reentrant - Should normally be protected by MUTEX
 		getTemperatureFromSensor();
+	}
+}
+
+void getCO2( void *pvParameters )
+{
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = 5000/portTICK_PERIOD_MS; // 500 ms
+
+	// Initialize the xLastWakeTime variable with the current time.
+	xLastWakeTime = xTaskGetTickCount();
+
+	for(;;)
+	{
+		vTaskDelayUntil( &xLastWakeTime, xFrequency );
+		puts("Calling getCO2 method.\n"); // stdio functions are not reentrant - Should normally be protected by MUTEX
+		getCO2FromSensor();
 	}
 }
 
@@ -103,6 +128,9 @@ void initialiseSystem()
 	{
 		printf("Temperature driver was failed to initialized. Result: %s\n",hih8120_create());
 	}
+	
+	CO2_create();
+	
 
 	// vvvvvvvvvvvvvvvvv BELOW IS LoRaWAN initialisation vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 	// Initialise the HAL layer and use 5 for LED driver priority
