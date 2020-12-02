@@ -12,9 +12,8 @@
 #include <lora_driver.h>
 #include <status_leds.h>
 #include "loraWANHandler.h"
-
 #include "CO2Sensor.h" //We get the appEUI and appKEY through the interface 
-
+#include "temperature_task.h"
 
 static char _out_buf[100];
 
@@ -130,10 +129,9 @@ void lora_handler_task( void *pvParameters )
 	{
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
 
-		// Some dummy payload
-		uint16_t hum = 12345; // Dummy humidity
-		int16_t temp = 5465; // Dummy temp
-		uint16_t co2_ppm = sd_getCo2();
+		uint16_t hum = sd_getHumid(); // Dummy humidity
+		int16_t temp = sd_getTemp(); // Dummy temp
+		uint16_t co2_ppm = 1050; // Dummy CO2
 
 		_uplink_payload.bytes[0] = hum >> 8;
 		_uplink_payload.bytes[1] = hum & 0xFF;
