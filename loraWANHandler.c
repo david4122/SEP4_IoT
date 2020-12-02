@@ -11,11 +11,9 @@
 
 #include <lora_driver.h>
 #include <status_leds.h>
+#include "loraWANHandler.h"
+#include "CO2Sensor.h" //We get the appEUI and appKEY through the interface 
 #include "temperature_task.h"
-
-// Parameters for OTAA join - You have got these in a mail from IHA
-#define LORA_appEUI "689DF9DF68156742"
-#define LORA_appKEY "B09F779D3DF66B89B996955E3B4ED977"
 
 static char _out_buf[100];
 
@@ -131,7 +129,6 @@ void lora_handler_task( void *pvParameters )
 	{
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
 
-		// Some dummy payload
 		uint16_t hum = sd_getHumid(); // Dummy humidity
 		int16_t temp = sd_getTemp(); // Dummy temp
 		uint16_t co2_ppm = 1050; // Dummy CO2

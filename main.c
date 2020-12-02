@@ -27,7 +27,6 @@
 #include <lora_driver.h>
 
 // define two Tasks
-void getTemperature( void *pvParameters );
 void getCO2( void *pvParameters );
 void task2( void *pvParameters );
 
@@ -123,11 +122,6 @@ void initialiseSystem()
 	stdio_create(ser_USART0);
 	// Let's create some tasks
 	create_tasks_and_semaphores();
-	
-	if ( HIH8120_OK != hih8120_create())
-	{
-		printf("Temperature driver was failed to initialized. Result: %s\n",hih8120_create());
-	}
 	
 	CO2_create();
 	
