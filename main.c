@@ -27,13 +27,9 @@
 #include "light_task.h"
 
 
-<<<<<<< HEAD
 
 /*Task definition ------------------------------------------*/
 
-=======
-// define two Tasks
->>>>>>> master
 void getCO2( void *pvParameters );
 void task2( void *pvParameters );
 
@@ -61,19 +57,6 @@ void create_tasks_and_semaphores(void)
 
 	xTaskCreate(
 	getTemperatureFromSensor_task
-<<<<<<< HEAD
-=======
-	,  (const portCHAR *)"Get Temperature"  // A name just for humans
-	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
-	,  NULL
-	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-	,  NULL );
-	
-	//CO2
-	
-	xTaskCreate(
-	get_humidityFromSensor_task
->>>>>>> master
 	,  (const portCHAR *)"Get Temperature"  // A name just for humans
 	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
 	,  NULL
@@ -104,15 +87,11 @@ void initialiseSystem()
 	// Let's create some tasks
 	create_tasks_and_semaphores();
 	
-<<<<<<< HEAD
 	if ( HIH8120_OK != hih8120_create())
 	{
 		printf("Temperature driver was failed to initialized. Result: %s\n",hih8120_create());
 	}
 	
-=======
-	CO2_create();
->>>>>>> master
 	
 	// vvvvvvvvvvvvvvvvv BELOW IS LoRaWAN initialisation vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 	// Initialise the HAL layer and use 5 for LED driver priority
