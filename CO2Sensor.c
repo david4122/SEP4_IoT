@@ -47,7 +47,3 @@ uint16_t getCO2FromSensor(){
 	printf("CO2: %d\n",ppm);
 	return ppm;
 }
-
-
-
-

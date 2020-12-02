@@ -11,10 +11,15 @@
 
 #include <lora_driver.h>
 #include <status_leds.h>
+#include "loraWANHandler.h"
+#include "CO2Sensor.h" //We get the appEUI and appKEY through the interface 
 #include "temperature_task.h"
+<<<<<<< HEAD
 #include "CO2Sensor.h"
 #include "loraWANHandler.h" //We get the appEUI and appKEY through the interface 
 
+=======
+>>>>>>> master
 
 static char _out_buf[100];
 
@@ -131,13 +136,9 @@ void lora_handler_task( void *pvParameters )
 	{
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
 
-		// Some dummy payload
-		uint16_t hum = sd_getHumid();
-		int16_t temp = sd_getTemp(); 
-		uint16_t co2_ppm = sd_getCo2();
-		uint16_t ligth_ppm = sd_getLight();
-	
-
+		uint16_t hum = sd_getHumid(); // Dummy humidity
+		int16_t temp = sd_getTemp(); // Dummy temp
+		uint16_t co2_ppm = 1050; // Dummy CO2
 
 		_uplink_payload.bytes[0] = hum >> 8;
 		_uplink_payload.bytes[1] = hum & 0xFF;
@@ -145,8 +146,6 @@ void lora_handler_task( void *pvParameters )
 		_uplink_payload.bytes[3] = temp & 0xFF;
 		_uplink_payload.bytes[4] = co2_ppm >> 8;
 		_uplink_payload.bytes[5] = co2_ppm & 0xFF;
-		_uplink_payload.bytes[6] = ligth_ppm >> 8;
-		_uplink_payload.bytes[7] = ligth_ppm & 0xFF;
 
 		status_leds_shortPuls(led_ST4);  // OPTIONAL
 		printf("Upload Message >%s<\n", lora_driver_mapReturnCodeToText(lora_driver_sendUploadMessage(false, &_uplink_payload)));
