@@ -17,4 +17,10 @@ void sd_setTemp(shared_data_t* self, uint16_t t);
 void sd_setHumid(shared_data_t* self, uint16_t h);
 
 uint16_t sd_getTemp(shared_data_t* self);
+<<<<<<< HEAD
+uint16_t sd_getCo2(shared_data_t* self);
 uint16_t sd_getHumid(shared_data_t* self);
+uint16_t sd_getLight(shared_data_t* self);
+=======
+uint16_t sd_getHumid(shared_data_t* self);
+>>>>>>> master
