@@ -4,26 +4,21 @@
 * Created: 12/04/2019 10:09:05
 *  Author: IHA
 */
-#include <stddef.h>
-#include <stdio.h>
-
-#include <ATMEGA_FreeRTOS.h>
-
-#include <lora_driver.h>
-#include <status_leds.h>
-#include "temperature_task.h"
-#include "CO2Sensor.h"
-#include "loraWANHandler.h" //We get the appEUI and appKEY through the interface
-
-
+#include "loraWANHandler.h"
 static char _out_buf[100];
-
-void lora_handler_task( void *pvParameters );
-
 static lora_driver_payload_t _uplink_payload;
+void lora_handler_task( void *pvParameters );
+MessageBufferHandle_t xMessageBuffer;
+size_t xReceivedBytes;
+shared_data_t *sd_t;
 
-void lora_handler_create(UBaseType_t lora_handler_task_priority)
+
+
+
+void lora_handler_create(UBaseType_t lora_handler_task_priority,MessageBufferHandle_t mb)
 {
+	xMessageBuffer = mb;
+	
 	xTaskCreate(
 	lora_handler_task
 	,  (const portCHAR *)"LRHand"  // A name just for humans
@@ -104,6 +99,28 @@ static void _lora_setup(void)
 		}
 	}
 }
+static void receive_message_buffer() {
+	
+	/* Receive the next message from the message buffer.  Wait in the Blocked
+    state (so not using any CPU processing time) for a maximum of 100ms for
+    a message to become available. */
+    xReceivedBytes = xMessageBufferReceive( xMessageBuffer,
+                                            &sd_t,
+                                            sizeof( sd_t ),
+                                            portMAX_DELAY );
+	uint16_t hum = sd_getHumid(sd_t);
+	uint16_t temp = sd_getTemp(sd_t);
+	uint16_t co2_ppm = sd_getCo2(sd_t);
+	uint16_t ligth_ppm = sd_getLight(sd_t);
+											
+    if( xReceivedBytes > 0 )
+    { 
+        /* data contains a message that is xReceivedBytes long.  Process
+        the message here.... */
+    }
+}
+
+
 
 /*-----------------------------------------------------------*/
 void lora_handler_task( void *pvParameters )
@@ -114,28 +131,32 @@ void lora_handler_task( void *pvParameters )
 	lora_driver_resetRn2483(0);
 	// Give it a chance to wakeup
 	vTaskDelay(150);
+	
+	receive_message_buffer(xMessageBuffer);
 
 	lora_driver_flushBuffers(); // get rid of first version string from module after reset!
-
+	 vTaskDelay(150);
 	_lora_setup();
+	 vTaskDelay(150);
 
-	//THE ONE BELOW WAS 6, CHANGED IT TO 8 DUE TO THE BIGGER PAYLOAD. Dunno if it's gonna work thoe.
-	_uplink_payload.len = 8;
+	//max len is 20 bytes.
+	_uplink_payload.len = 10;
 	_uplink_payload.port_no = 2;
 
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = pdMS_TO_TICKS(300000UL); // Upload message every 5 minutes (300000 ms)
+	const TickType_t xFrequency = pdMS_TO_TICKS(300000UL); // Upload message every 5 minutes
 	xLastWakeTime = xTaskGetTickCount();
 	
 	for(;;)
 	{
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
 
-		// Some dummy payload
-		uint16_t hum = sd_getHumid();
-		int16_t temp = sd_getTemp();
-		uint16_t co2_ppm = sd_getCo2();
-		uint16_t ligth_ppm = sd_getLight();
+		// I think we just need mutex to keep the pointer to the struct of not writing some info on other methods while doing the same to others.
+		
+		uint16_t hum = sd_getHumid(sd_t);
+		int16_t temp = sd_getTemp(sd_t);
+		uint16_t co2_ppm = sd_getCo2(sd_t);
+		uint16_t ligth_ppm = sd_getLight(sd_t);
 		
 
 

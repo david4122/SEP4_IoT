@@ -6,17 +6,12 @@
  */ 
 
 #include "light_task.h"
-#include <tsl2591.h>
-#include <ATMEGA_FreeRTOS.h>
-#include <stdio.h>
+
 
 static uint16_t ppm;
 static tsl2591_returnCode_t rc;
-
-//TODO Include structs that are in documentation so we can start cahching the data. so we can show from which time was the data fetched.Useful for user stories that
-//include history or changing settings.
-
-
+static EventGroupHandle_t event_group;
+static EventBits_t uxBits;
 
 void tsl2591Callback(tsl2591_returnCode_t rc)
 {
@@ -25,7 +20,7 @@ void tsl2591Callback(tsl2591_returnCode_t rc)
 	switch (rc)
 	{
 		case TSL2591_DATA_READY:
-			if ( TSL2591_OK == (rc = tsl2591_getFullSpectrumRaw(&_tmp)) )
+			if ( TSL2591_OK == (rc = tsl2591_getFullSpectrumRaw(&_tmp)))
 			{
 				printf("\nFull Raw:%04X\n", _tmp);
 			}
@@ -75,7 +70,8 @@ void tsl2591Callback(tsl2591_returnCode_t rc)
 	}
 }
 
-void tsl2591_light_create() {
+void tsl2591_light_create(EventGroupHandle_t eg) {
+	event_group = eg;
 	void (*callback)(uint16_t) = &tsl2591Callback;
 
 	tsl2591_create(callback);
@@ -94,6 +90,46 @@ uint16_t getLightFromSensor() {
 				return ppm;
 		}
 
+	}
+	rc = tsl2591_disable();
+}
+
+void getLightFromSensor_Task_inClass(void *pvParameters) {
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = 900/portTICK_PERIOD_MS;
+	shared_data_t *p_sd = (shared_data_t*) pvParameters;
+	xLastWakeTime = xTaskGetTickCount();
+	for (;;) {
+				rc = tsl2591_enable();
+				if( rc == TSL2591_OK) {
+					vTaskDelay(pdMS_TO_TICKS(100));
+					rc = tsl2591_fetchData();
+					
+					if( rc == TSL2591_OK) {
+						rc = tsl259_getVisibleRaw(&ppm);
+						
+						if(rc == TSL2591_OK) {
+							sd_setLight(p_sd,&ppm);
+							
+							 uxBits = xEventGroupSetBits(
+							 event_group,    /* The event group being updated. */
+							 BIT_TASK_LIGHT_READY );
+							 
+							  if( ( uxBits & BIT_TASK_LIGHT_READY ) == BIT_TASK_LIGHT_READY )
+                {
+	            	//printf("light bit is set\n")
+                    /* Bit remained set when the function returned. */
+                }
+                else
+                {
+                    /* .  It might be that a task was waiting for both of the bit to be set, and the bits were cleared
+                    as the task left the Blocked state. */
+                }
+							
+						}
+					}
+				}
+		
 	}
 	rc = tsl2591_disable();
 }

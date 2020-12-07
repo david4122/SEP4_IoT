@@ -15,31 +15,87 @@
 #include <ATMEGA_FreeRTOS.h>
 #include <FreeRTOSTraceDriver.h>
 #include <lora_driver.h>
+#include <stdio_driver.h>
 
 #include <semphr.h>
 #include <event_groups.h>
 #include <stdio_driver.h>
 #include <serial.h>
 
-#include "temperature_task.h"
-#include "humidity_task.h"
-#include "CO2Sensor.h"
+#include "humidity_temperature_task.h"
+#include "co2_task.h"
 #include "light_task.h"
+#include "loraWANHandler.h"
 
-
+#define configTOTAL_HEAP_SIZE 16384
 
 /*Task definition ------------------------------------------*/
+//Task definition is done in their own header files
+//body is in corresponding classes
+//Maybe we should also take this and put it on shared_data as 
+//definition and body in the class
 
-void getCO2( void *pvParameters );
-void task2( void *pvParameters );
+
 
 
 // define semaphore handle
 SemaphoreHandle_t xTestSemaphore;
+EventGroupHandle_t measure_EventGroup;
+MessageBufferHandle_t xMessageBuffer;
+const size_t xMessageBufferSizeBytes = 100;
+EventBits_t uxBits;
 
-// Prototype for LoRaWAN handler
-void lora_handler_create(UBaseType_t lora_handler_task_priority);
+void receiveAllData( void *pvParameters );
 
+ 
+void receiveAllData( void *pvParameters ){
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = pdMS_TO_TICKS(1000); // 500 ms
+    xLastWakeTime = xTaskGetTickCount();
+    size_t xBytesSent;
+
+	for(;;)
+	{
+		vTaskDelayUntil( &xLastWakeTime, xFrequency );
+		// Initialize the xLastWakeTime variable with the current time.
+		
+		
+			uxBits = xEventGroupWaitBits(measure_EventGroup, /* The event group being tested. */
+	        BIT_TASK_CO2_READY | BIT_TASK_TEMP_HUMIDITY_READY |BIT_TASK_LIGHT_READY, /* The bits to wait for. */
+	        pdTRUE, /* Bits will be cleared before return*/
+	        pdTRUE, /* Wait for bits to be set */
+	        pdMS_TO_TICKS(1000)); /* Maximum time to wait*/
+	
+	        if( ( uxBits & ( BIT_TASK_CO2_READY | BIT_TASK_TEMP_HUMIDITY_READY |BIT_TASK_LIGHT_READY ) ) == ( BIT_TASK_CO2_READY | BIT_TASK_TEMP_HUMIDITY_READY |BIT_TASK_LIGHT_READY) )
+            {
+               /* xEventGroupWaitBits() returned because all bits were set. */
+	           printf("all data measured\n");
+			  
+			  
+               /* Send the data package to the message buffer, blocking for a maximum of 100ms to
+               wait for enough space to be available in the message buffer. */
+               xBytesSent = xMessageBufferSend( xMessageBuffer,
+                                     getDataPackage(),
+                                     sizeof( getDataPackage() ),
+                                     pdMS_TO_TICKS( 100 ) );
+
+               if( xBytesSent = sizeof( shared_data_t* ) )
+               {
+                   /* The call to xMessageBufferSend() times out before there was enough
+                   space in the buffer for the data to be written. */
+				   printf("successfully send to buffer\n");
+               }
+			   
+            }else{
+               /* xEventGroupWaitBits() returned because xTicksToWait ticks passed
+               without all bits becoming set. */
+	           printf("not all data received\n");
+            }
+			
+			
+		
+	}
+}
 /*-----------------------------------------------------------*/
 void create_tasks_and_semaphores(void)
 {
@@ -56,18 +112,38 @@ void create_tasks_and_semaphores(void)
 	}
 
 	xTaskCreate(
-	getTemperatureFromSensor_task
-	,  (const portCHAR *)"Get Temperature"  // A name just for humans
+	getTempAndHumFromSensor_Task_inClass
+	,  (const portCHAR *)"Get Temperature & Humidity"  // A name just for humans
 	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
 	,  NULL
-	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+	,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 	,  NULL );
 	
 	//CO2
 	
 	xTaskCreate(
-	get_humidityFromSensor_task
-	,  (const portCHAR *)"Get Temperature"  // A name just for humans
+	getCo2FromSensor_Task_inClass
+	,  (const portCHAR *)"Get CO2"  // A name just for humans
+	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
+	,  NULL
+	,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+	,  NULL );
+	
+	//Light
+	
+	xTaskCreate(
+	getLightFromSensor_Task_inClass
+	,  (const portCHAR *)"Get Visible Raw"  // A name just for humans
+	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
+	,  NULL
+	,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+	,  NULL );
+	
+	//Event Group Task (mb consider we put the definition, task body in shared_data?)
+	
+	xTaskCreate(
+	receiveAllData
+	,  (const portCHAR *)"Get Visible Raw"  // A name just for humans
 	,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
 	,  NULL
 	,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
@@ -87,19 +163,35 @@ void initialiseSystem()
 	// Let's create some tasks
 	create_tasks_and_semaphores();
 	
-	if ( HIH8120_OK != hih8120_create())
+	/* Create Event Groups */
+	measure_EventGroup= xEventGroupCreate();
+	temp_humid_create(measure_EventGroup);
+	CO2_create(measure_EventGroup);
+	tsl2591_light_create(measure_EventGroup);
+	
+    /* Create a message buffer that can hold 100 bytes.  The memory used to hold
+    both the message buffer structure and the data in the message buffer is
+    allocated dynamically. */
+    xMessageBuffer = xMessageBufferCreate( xMessageBufferSizeBytes );
+
+    if( xMessageBuffer == NULL )
+    {
+        /* There was not enough heap memory space available to create the
+        message buffer. */
+    }
+	else
 	{
-		printf("Temperature driver was failed to initialized. Result: %s\n",hih8120_create());
-	}
+		printf("The message buffer was created successfully\n");
+        /* The message buffer was created successfully and can now be used. */
+    }
+
 	
-	
-	// vvvvvvvvvvvvvvvvv BELOW IS LoRaWAN initialisation vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 	// Initialise the HAL layer and use 5 for LED driver priority
 	hal_create(5);
 	// Initialise the LoRaWAN driver without down-link buffer
 	lora_driver_create(1, NULL);
 	// Create LoRaWAN task and start it up with priority 3
-	lora_handler_create(3);
+	lora_handler_create(3,xMessageBuffer);
 }
 
 /*-----------------------------------------------------------*/

@@ -9,9 +9,16 @@
 #pragma once
 #include <stdint.h>
 #include <tsl2591.h>
+#include <stdio.h>
+#include <ATMEGA_FreeRTOS.h>
+#include "event_groups.h"
+#include "shared_data.h"
 
-void tsl2591_light_create();
+#define BIT_TASK_LIGHT_READY (1 << 2)
+
+void tsl2591_light_create(EventGroupHandle_t eg);
 uint16_t getLightFromSensor();
+void getLightFromSensor_Task_inClass(void *pvParameters);
 
 
 
