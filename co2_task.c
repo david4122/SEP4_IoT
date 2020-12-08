@@ -19,12 +19,12 @@ static void CO2Callback(uint16_t ppm){
 }
 
 void CO2_create(EventGroupHandle_t eg){
-	event_group = eg
+	event_group = eg;
 	void (*callback)(uint16_t)= &CO2Callback; 
 	
 	// The first parameter is the USART port the MH-Z19 sensor is connected to - in this case USART3
 	// The second parameter is the address of the call back function
-	mh_z19_create(ser_USART3, callback);
+	mh_z19_create(ser_USART3, &callback);
 }
 
 

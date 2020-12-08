@@ -44,6 +44,7 @@ EventGroupHandle_t measure_EventGroup;
 MessageBufferHandle_t xMessageBuffer;
 const size_t xMessageBufferSizeBytes = 100;
 EventBits_t uxBits;
+shared_data_t* shared_data_p;
 
 void receiveAllData( void *pvParameters );
 
@@ -57,45 +58,32 @@ void receiveAllData( void *pvParameters ){
 	for(;;)
 	{
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
-		// Initialize the xLastWakeTime variable with the current time.
-		
-		
-			uxBits = xEventGroupWaitBits(measure_EventGroup, /* The event group being tested. */
-	        BIT_TASK_CO2_READY | BIT_TASK_TEMP_HUMIDITY_READY |BIT_TASK_LIGHT_READY, /* The bits to wait for. */
-	        pdTRUE, /* Bits will be cleared before return*/
-	        pdTRUE, /* Wait for bits to be set */
-	        pdMS_TO_TICKS(1000)); /* Maximum time to wait*/
+		uxBits = xEventGroupWaitBits(
+			measure_EventGroup,
+	        BIT_TASK_CO2_READY | BIT_TASK_TEMP_HUMIDITY_READY |BIT_TASK_LIGHT_READY, 
+	        pdTRUE,
+	        pdTRUE, 
+	        pdMS_TO_TICKS(1000)
+			); 
 	
-	        if( ( uxBits & ( BIT_TASK_CO2_READY | BIT_TASK_TEMP_HUMIDITY_READY |BIT_TASK_LIGHT_READY ) ) == ( BIT_TASK_CO2_READY | BIT_TASK_TEMP_HUMIDITY_READY |BIT_TASK_LIGHT_READY) )
+	        if( ( uxBits & ( BIT_TASK_CO2_READY | BIT_TASK_TEMP_HUMIDITY_READY |BIT_TASK_LIGHT_READY )) == ( BIT_TASK_CO2_READY | BIT_TASK_TEMP_HUMIDITY_READY |BIT_TASK_LIGHT_READY) )
             {
-               /* xEventGroupWaitBits() returned because all bits were set. */
-	           printf("all data measured\n");
-			  
-			  
-               /* Send the data package to the message buffer, blocking for a maximum of 100ms to
-               wait for enough space to be available in the message buffer. */
                xBytesSent = xMessageBufferSend( xMessageBuffer,
-                                     getDataPackage(),
-                                     sizeof( getDataPackage() ),
-                                     pdMS_TO_TICKS( 100 ) );
+                                     shared_data_p,
+                                     sizeof( shared_data_p),
+                                     pdMS_TO_TICKS( 100 ));
 
-               if( xBytesSent = sizeof( shared_data_t* ) )
+               if ( xBytesSent = sizeof( shared_data_p))
                {
-                   /* The call to xMessageBufferSend() times out before there was enough
-                   space in the buffer for the data to be written. */
 				   printf("successfully send to buffer\n");
-               }
-			   
-            }else{
-               /* xEventGroupWaitBits() returned because xTicksToWait ticks passed
-               without all bits becoming set. */
-	           printf("not all data received\n");
-            }
-			
-			
-		
+			   }else {
+				   
+			  }
+		}
 	}
 }
+			   
+        
 /*-----------------------------------------------------------*/
 void create_tasks_and_semaphores(void)
 {

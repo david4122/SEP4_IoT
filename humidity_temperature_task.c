@@ -15,7 +15,7 @@ static uint16_t temperature;
 static uint16_t humidity;
 static EventGroupHandle_t event_group;
 static EventBits_t uxBits;
-#define ROUND(X)  (X>=0)? (int) (X + 0.5) : (int)-(ABS(X) +0.5) 
+
 
 void temp_humid_create(EventGroupHandle_t eg) {
 	event_group = eg;
@@ -51,8 +51,8 @@ void getTempAndHumFromSensor_Task_inClass(void *PvParameters) {
 		//thought it would be a good idea.
 		
 		vTaskDelay(pdMS_TO_TICKS(100));
-		temperature = ROUND(hih8120_getTemperature());
-		humidity = ROUND(hih8120_getHumidity());
+		temperature = (uint16_t)hih8120_getTemperature();
+		humidity = (uint16_t)hih8120_getHumidity();
 		sd_setTemp(p_sd,temperature);
 		sd_setHumid(p_sd,humidity);
 		printf("Temperature: %d.%d \n",temperature,humidity);
