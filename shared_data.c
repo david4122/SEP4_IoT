@@ -13,6 +13,7 @@ struct shared_data {
 	uint16_t humid;
 	uint16_t light;
 };
+//Pointer is defined in header file, by including the header file you have access to it.
 
 void sd_setTemp(shared_data_t* self, uint16_t t) {self->temp = t;}
 void sd_setCo2(shared_data_t* self, uint16_t c) {self->co2= c;}

@@ -4,8 +4,8 @@
  * Created: 11/22/2020 6:19:08 PM
  *  Author: IoT Group
  */ 
-#include <stdint.h>
 #pragma once
+#include <stdint.h>
 
 typedef struct shared_data shared_data_t;
 
