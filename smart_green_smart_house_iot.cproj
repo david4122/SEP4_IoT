@@ -183,10 +183,10 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="CO2Sensor.c">
+    <Compile Include="co2_task.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="CO2Sensor.h">
+    <Compile Include="co2_task.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="drivers\display_7seg.h">
@@ -195,10 +195,10 @@
     <None Include="drivers\docs\example\loraWANHandler.c">
       <SubType>compile</SubType>
     </None>
-    <Compile Include="humidity_task.c">
+    <Compile Include="humidity_temperature_task.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="humidity_task.h">
+    <Compile Include="humidity_temperature_task.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="light_task.c">
@@ -217,12 +217,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="shared_data.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="temperature_task.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="temperature_task.h">
       <SubType>compile</SubType>
     </Compile>
     <None Include="drivers\docs\example\main.c">
@@ -384,6 +378,12 @@
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
+    <None Include="smart_green_smart_house_iot.atsln">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="smart_green_smart_house_iot.componentinfo.xml">
+      <SubType>compile</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="drivers\" />
