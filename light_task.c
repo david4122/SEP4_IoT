@@ -72,27 +72,27 @@ void tsl2591Callback(tsl2591_returnCode_t rc)
 
 void tsl2591_light_create(EventGroupHandle_t eg) {
 	event_group = eg;
-	void (*callback)(uint16_t) = &tsl2591Callback;
+	void (*callback)(tsl2591_returnCode_t) = tsl2591Callback;
 
 	tsl2591_create(callback);
 
 }
 
 
-uint16_t getLightFromSensor() {
-	rc = tsl2591_enable();
-	if(rc == TSL2591_OK)
-	{
-		vTaskDelay(pdMS_TO_TICKS(60));
-		rc = tsl2591_fetchData(); //&ppm was here?
-		if( rc == TSL2591_OK) {
-			printf("Light Data : %d\r\n",ppm);
-				return ppm;
-		}
-
-	}
-	rc = tsl2591_disable();
-}
+//uint16_t getLightFromSensor() {
+	//rc = tsl2591_enable();
+	//if(rc == TSL2591_OK)
+	//{
+		//vTaskDelay(pdMS_TO_TICKS(60));
+		//rc = tsl2591_fetchData(); //&ppm was here?
+		//if( rc == TSL2591_OK) {
+			//printf("Light Data : %d\r\n",ppm);
+				//return ppm;
+		//}
+//
+	//}
+	//rc = tsl2591_disable();
+//}
 
 void getLightFromSensor_Task_inClass(void *pvParameters) {
 	TickType_t xLastWakeTime;
@@ -100,6 +100,9 @@ void getLightFromSensor_Task_inClass(void *pvParameters) {
 	shared_data_t *p_sd = (shared_data_t*) pvParameters;
 	xLastWakeTime = xTaskGetTickCount();
 	for (;;) {
+		
+				vTaskDelayUntil(&xLastWakeTime,xFrequency);
+				
 				rc = tsl2591_enable();
 				if( rc == TSL2591_OK) {
 					vTaskDelay(pdMS_TO_TICKS(100));
@@ -109,7 +112,7 @@ void getLightFromSensor_Task_inClass(void *pvParameters) {
 						rc = tsl259_getVisibleRaw(&ppm);
 						
 						if(rc == TSL2591_OK) {
-							sd_setLight(p_sd,&ppm);
+							sd_setLight(p_sd,ppm);
 							
 							 uxBits = xEventGroupSetBits(
 							 event_group,    /* The event group being updated. */

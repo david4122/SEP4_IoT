@@ -2,61 +2,65 @@
  * temperature_task.c
  *
  * Created: 11/13/2020 12:55:59 PM
- *  Author: Matey Matev
- 
- void temp_humid_create(EventGroupHandle_t eg);
- void getTempAndHumFromSensor_Task_inClass(void *PvParameters);
+ *  Author: IoT
  */ 
-
 
 #include "humidity_temperature_task.h"
 
-static uint16_t temperature;
-static uint16_t humidity;
-static EventGroupHandle_t event_group;
-static EventBits_t uxBits;
+#include<stdio.h>
+#include <stdlib.h>
+
+#include<hih8120.h>
+
+#include "shared_data.h"
 
 
-void temp_humid_create(EventGroupHandle_t eg) {
-	event_group = eg;
+void temp_hum_task(void *pvParameters) {
+	shared_data_t *sd = (shared_data_t*) pvParameters;
 	
-	if ( HIH8120_OK != hih8120_create())
-	{
-		printf("Temperature driver was failed to initialized. Result: %s\n",hih8120_create());
+	puts("[*] TEMP HUM START\n");
+	
+	
+	hih8120_driverReturnCode_t ret;
+	while((ret = hih8120_create()) != HIH8120_OK){
+		printf("[!] ERROR CREATING TEMPHUM SENSOR: %d\n", ret);
+		vTaskDelay(50);
 	}
-}
-
-void getTempAndHumFromSensor_Task_inClass(void *PvParameters) {
+	
+	vTaskDelay(10);
+	
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = 900/portTICK_PERIOD_MS; //90ms
-	shared_data_t *p_sd = (shared_data_t*) PvParameters;
+	const TickType_t xFrequency = 900 / portTICK_PERIOD_MS; //90ms
 	xLastWakeTime = xTaskGetTickCount();
+	
 	for(;;) {
-		
-		vTaskDelayUntil(&xLastWakeTime,xFrequency);
-		
-		if(HIH8120_OK != hih8120_wakeup())
+
+		vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
+		if(HIH8120_OK != (ret = hih8120_wakeup()))
 		{
-			printf("Error in wake up temp sensor! %s\n", hih8120_wakeup());
+			printf("[!] Error in wake up temp sensor! %d\n", ret);
 		}
-		
+
 		vTaskDelay(pdMS_TO_TICKS(250));
-		
+
 		if(HIH8120_OK != hih8120_measure())
 		{
-			printf("Error in measure temp sensor! %s\n", hih8120_measure());
+			printf("Error in measure temp sensor! %s\n",  "replace with correct one, take method save it somewhere and print it here");
 		}
-		
-		//Don't know if we should use this round function.
-		//thought it would be a good idea.
-		
+
 		vTaskDelay(pdMS_TO_TICKS(100));
-		temperature = (uint16_t)hih8120_getTemperature();
-		humidity = (uint16_t)hih8120_getHumidity();
-		sd_setTemp(p_sd,temperature);
-		sd_setHumid(p_sd,humidity);
-		printf("Temperature: %d.%d \n",temperature,humidity);
 
-}
+		//sd_setTemp(sd, hih8120_getTemperature());
+		//sd_setHumid(sd, hih8120_getHumidity());
+		
+		printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>%f\n", hih8120_getTemperature());
+		
+		//uxBits = xEventGroupSetBits(
+				//sd->egroup,    /* The event group being updated. */
+				//BIT_TASK_TEMP_HUMIDITY_READY);	/* The bits being set. */
+			
+		printf("[*] Temperature: %f\n[*] Hum: %f\n", sd_getTemp(sd), sd_getHumid(sd));
 
+	}
 }

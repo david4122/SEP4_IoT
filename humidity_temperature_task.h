@@ -6,15 +6,7 @@
  */ 
 #pragma once
 
-#include <stdint.h>
-#include <hih8120.h>
-#include <ATMEGA_FreeRTOS.h>
-#include <stdio.h>
-#include "event_groups.h"
-#include "shared_data.h"
+#define BIT_TASK_TEMP_HUMIDITY_READY (1 << 0) 	// TODO move that into config file, has to be visible in other tasks for sync purposes
 
-#define BIT_TASK_TEMP_HUMIDITY_READY (1 << 0)
 
-void temp_humid_create(EventGroupHandle_t eg);
-void getTempAndHumFromSensor_Task_inClass(void *PvParameters);
-
+void temp_hum_task(void *pvParameters);
