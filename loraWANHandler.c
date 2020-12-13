@@ -5,6 +5,9 @@
 *  Author: IHA
 */
 #include "loraWANHandler.h"
+#include <string.h>
+#include "locgen.h"
+
 static char _out_buf[100];
 static lora_driver_payload_t _uplink_payload;
 void lora_handler_task( void *pvParameters );
@@ -121,7 +124,6 @@ static void receive_message_buffer() {
 }
 
 
-
 /*-----------------------------------------------------------*/
 void lora_handler_task( void *pvParameters )
 {
@@ -146,6 +148,11 @@ void lora_handler_task( void *pvParameters )
 	TickType_t xLastWakeTime;
 	const TickType_t xFrequency = pdMS_TO_TICKS(300000UL); // Upload message every 5 minutes
 	xLastWakeTime = xTaskGetTickCount();
+	// this is so retarded, but i guess it works
+	loc randomLocation = loc_create();
+	generateLocation(randomLocation);
+	uint16_t *array = getIntArray(randomLocation);
+	
 	
 	for(;;)
 	{
@@ -168,6 +175,18 @@ void lora_handler_task( void *pvParameters )
 		_uplink_payload.bytes[5] = co2_ppm & 0xFF;
 		_uplink_payload.bytes[6] = ligth_ppm >> 8;
 		_uplink_payload.bytes[7] = ligth_ppm & 0xFF;
+		
+		/* Basically how this works is:
+			1. We are getting a list with a converted characters to integer
+			2. We need to take numbers 1 by 1 ,  cause each of the number represents a character.
+			3. Then it converts it to hex, and sends it to lora.*/
+			
+		for(int i = 8; i < (uint16_t *) array + 8; i++)
+		{
+			_uplink_payload.bytes[i] = array[i] >> 8;
+			// This needs to be tested.
+			_uplink_payload.bytes[i++] = array[i] & 0xFF;
+		}
 
 		status_leds_shortPuls(led_ST4);  // OPTIONAL
 		printf("Upload Message >%s<\n", lora_driver_mapReturnCodeToText(lora_driver_sendUploadMessage(false, &_uplink_payload)));
