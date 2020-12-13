@@ -14,7 +14,7 @@ typedef struct shared_data shared_data_t;
 
 shared_data_t* sd_create();
 
-EventGroupHandle_t get_event_group(shared_data_t* self);
+EventGroupHandle_t sd_getEgroup(shared_data_t* self);
 
 float sd_getTemp(shared_data_t* self);
 float sd_getCo2(shared_data_t* self);

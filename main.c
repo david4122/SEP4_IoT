@@ -7,6 +7,8 @@
 
 
 /*Drivers, FreeRTOS, LoRaWAN definition ------------------*/
+#include <FreeRTOSConfig.h>
+
 #include <ATMEGA_FreeRTOS.h>
 #include <semphr.h>
 #include <event_groups.h>
@@ -19,16 +21,15 @@
 #include <avr/sfr_defs.h>
 #include <hal_defs.h>
 #include <ihal.h>
-#include <FreeRTOSTraceDriver.h>
 #include <lora_driver.h>
 #include <stdio_driver.h>
 
-
-//#include "shared_data.h"
-//#include "humidity_temperature_task.h"
-//#include "co2_task.h"
-//#include "light_task.h"
-//#include "loraWAN_task.h"
+#include "hih8120.h"
+#include "shared_data.h"
+#include "humidity_temperature_task.h"
+#include "co2_task.h"
+#include "light_task.h"
+#include "loraWAN_task.h"
 
 int freeMem() {
 	int size = 8 * 1024;
@@ -48,95 +49,92 @@ void init_task(void* pvParams)
 	//lora_driver_flushBuffers(); 
 	//vTaskDelay(150);
 	//lora_setup();
-	
-	//puts("[*] INIT STARTED");
-	printf("[*] FREE MEM: %d\n", freeMem());
 
+	puts("[*] INIT STARTED");
+	printf("[*] FREE MEM: %d FREERTOS FREE: %d\n", freeMem(), xPortGetFreeHeapSize());
 
-	//shared_data_t* shared_data_p = sd_create();
 
 	//xTaskCreate(
-			//lora_handler_task,
-			//(const portCHAR *)"LRHand",
-			//configMINIMAL_STACK_SIZE+200,
-			//shared_data_p,
-			//tskIDLE_PRIORITY+2,
-			//NULL);
+	//lora_handler_task,
+	//(const portCHAR *)"LRHand",
+	//configMINIMAL_STACK_SIZE+200,
+	//sd,
+	//tskIDLE_PRIORITY+2,
+	//NULL);
 
-	//xTaskCreate(
-			//temp_hum_task,
-			//(const portCHAR *)"Get Temperature & Humidity",
-			//configMINIMAL_STACK_SIZE,
-			//shared_data_p,
-			//tskIDLE_PRIORITY+1,
-			//NULL);
+	/* printf("SHARED DATA: %d\n", (int)sd); */
+
+	/* hih8120_driverReturnCode_t ret; */
+	/* while((ret = hih8120_create()) != HIH8120_OK){ */
+	/* 	printf("[!] ERROR CREATING TEMPHUM SENSOR: %d\n", ret); */
+	/* 	vTaskDelay(50); */
+	/* } */
+
+
+	/* xTaskCreate( */
+	/* 		temp_hum_task, */
+	/* 		(const portCHAR *)"Get Temperature & Humidity", */
+	/* 		configMINIMAL_STACK_SIZE, */
+	/* 		sd, */
+	/* 		tskIDLE_PRIORITY+1, */
+	/* 		NULL); */
 
 	//CO2
 
-	//xTaskCreate(
-	//getCo2FromSensor_Task_inClass
-	//,  (const portCHAR *)"Get CO2"  // A name just for humans
-	//,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
-	//,  shared_data_p
-	//,  tskIDLE_PRIORITY+1 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-	//,  NULL );
-	//
+	/* xTaskCreate( */
+	/* 		getCo2FromSensor_Task_inClass */
+	/* 		,  (const portCHAR *)"Get CO2"  // A name just for humans */
+	/* 		,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater */
+	/* 		,  sd */
+	/* 		,  tskIDLE_PRIORITY+1 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest. */
+	/* 		,  NULL ); */
+
 	////Light
-	//
 	//xTaskCreate(
 	//getLightFromSensor_Task_inClass
 	//,  (const portCHAR *)"Get Visible Raw"  // A name just for humans
 	//,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
-	//,  shared_data_p
+	//,  sd
 	//,  tskIDLE_PRIORITY+1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 	//,  NULL );
-	
+
 	puts("[*] INIT FINISHED");
-	
+
 	while(1) {
-		printf("FREE MEM: %d\n", freeMem());
+		printf("[*] FREE MEM: %d FREERTOS FREE: %d\n", freeMem(), xPortGetFreeHeapSize());
 		vTaskDelay(10);
 	}
 }
 
 
-
-/*-----------------------------------------------------------*/
 int main(void)
 {
-	
-	// Set output ports for leds used in the example
 	// Set output ports for leds used in the example
 	DDRA |= _BV(DDA0) | _BV(DDA7);
-	// Initialise the trace-driver to be used together with the R2R-Network
-	trace_init();
 	// Make it possible to use stdio on COM port 0 (USB) on Arduino board - Setting 57600,8,N,1
 	stdio_create(ser_USART0);
 
-	// vvvvvvvvvvvvvvvvv BELOW IS LoRaWAN initialisation vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-	// Initialise the HAL layer and use 5 for LED driver priority
+	// LoraWAN
 	hal_create(5);
-	// Initialise the LoRaWAN driver without down-link buffer
 	lora_driver_create(1, NULL);
-	
-	printf("1 FREE MEM: %d\n", freeMem());
-	
+
+	printf("[*] MAIN FREE MEM: %d\n", freeMem());
+
+	shared_data_t* sd = sd_create();
+
+	hih8120_driverReturnCode_t ret = hih8120_create();
+	printf(">>>> RET: %d\n", ret);
+
 	xTaskCreate(
 			init_task,
-			(const portCHAR *)"Initialise System",
+			(const portCHAR *) "Initialise System",
 			configMINIMAL_STACK_SIZE,
 			NULL,
 			3,
 			NULL);
-	
-	
-	printf("2 FREE MEM: %d\n", freeMem());
-			
+
 	vTaskStartScheduler(); // Initialise and run the freeRTOS scheduler. Execution should never return from here.
 
 	/* Replace with your application code */
-	while (1)
-	{
-	}
+	while (1) {}
 }
-

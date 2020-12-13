@@ -7,7 +7,7 @@
 
 #include "shared_data.h"
 
-#include<stdlib.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include<ATMEGA_FreeRTOS.h>
@@ -28,20 +28,25 @@ struct shared_data {
 
 
 shared_data_t* sd_create() {
-	shared_data_t* sd = malloc(sizeof(shared_data_t));	// MALLOC!!!!!
+	shared_data_t* sd = malloc(sizeof(shared_data_t));
+	sd->co2 = 0.0;
+	sd->humid = 0.0;
+	sd->temp = 0.0;
+	sd->light = 0.0;
+
 	sd->lock = xSemaphoreCreateMutex();
 	sd->egroup = xEventGroupCreate();
-	
+
 	if(sd->lock == NULL || sd->egroup == NULL) {
 		puts("[!] Could not initialize shared_data");
 		return NULL;
 	}
-	
+
 	return sd;
 }
 
 
-EventGroupHandle_t get_event_group(shared_data_t* self) {
+EventGroupHandle_t sd_getEgroup(shared_data_t* self) {
 	return self->egroup;
 }
 
@@ -79,39 +84,42 @@ void sd_setLight(shared_data_t* self, float l) {
 }
 
 float sd_getTemp(shared_data_t* self) {
+	float res = 0.0;
 	if(xSemaphoreTake(self->lock, (TickType_t) 10) == pdTRUE) {
-		float res = self->temp;
+		res = self->temp;
 
 		xSemaphoreGive(self->lock);
-		
-		return res;
 	}
+
+	return res;
 }
 
 float sd_getCo2(shared_data_t* self) {
+	float res = 0.0;
 	if(xSemaphoreTake(self->lock, (TickType_t) 10) == pdTRUE) {
-		float res = self->co2;
+		res = self->co2;
 
 		xSemaphoreGive(self->lock);
-		return res;
 	}
+	return res;
 }
 
 float sd_getHumid(shared_data_t* self) {
+	float res = 0.0;
 	if(xSemaphoreTake(self->lock, (TickType_t) 10) == pdTRUE) {
-		float res = self->humid;
+		res = self->humid;
 
 		xSemaphoreGive(self->lock);
-		return res;
 	}
+	return res;
 }
 
 float sd_getLight(shared_data_t* self) {
+	float res = 0.0;
 	if(xSemaphoreTake(self->lock, (TickType_t) 10) == pdTRUE) {
-		float res = self->light;
+		res = self->light;
 
 		xSemaphoreGive(self->lock);
-		
-		return res;
 	}
+	return res;
 }

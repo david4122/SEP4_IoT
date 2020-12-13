@@ -17,50 +17,50 @@
 
 void temp_hum_task(void *pvParameters) {
 	shared_data_t *sd = (shared_data_t*) pvParameters;
-	
+
 	puts("[*] TEMP HUM START\n");
-	
-	
+
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = 900 / portTICK_PERIOD_MS; //90ms
+	xLastWakeTime = xTaskGetTickCount();
+
+
 	hih8120_driverReturnCode_t ret;
 	while((ret = hih8120_create()) != HIH8120_OK){
 		printf("[!] ERROR CREATING TEMPHUM SENSOR: %d\n", ret);
 		vTaskDelay(50);
 	}
-	
-	vTaskDelay(10);
-	
-	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = 900 / portTICK_PERIOD_MS; //90ms
-	xLastWakeTime = xTaskGetTickCount();
-	
+
 	for(;;) {
 
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
+		hih8120_driverReturnCode_t ret;
 		if(HIH8120_OK != (ret = hih8120_wakeup()))
 		{
-			printf("[!] Error in wake up temp sensor! %d\n", ret);
+			printf("[!] HUMTEMP: Error in wake up temp sensor! %d\n", ret);
+			continue;
 		}
 
 		vTaskDelay(pdMS_TO_TICKS(250));
 
-		if(HIH8120_OK != hih8120_measure())
+		if(HIH8120_OK != (ret = hih8120_measure()))
 		{
-			printf("Error in measure temp sensor! %s\n",  "replace with correct one, take method save it somewhere and print it here");
+			printf("[!] HUMTEMP: Could not perform measurement: %d\n", ret);
+			continue;
 		}
 
 		vTaskDelay(pdMS_TO_TICKS(100));
 
-		//sd_setTemp(sd, hih8120_getTemperature());
-		//sd_setHumid(sd, hih8120_getHumidity());
-		
-		printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>%f\n", hih8120_getTemperature());
-		
-		//uxBits = xEventGroupSetBits(
-				//sd->egroup,    /* The event group being updated. */
-				//BIT_TASK_TEMP_HUMIDITY_READY);	/* The bits being set. */
-			
-		printf("[*] Temperature: %f\n[*] Hum: %f\n", sd_getTemp(sd), sd_getHumid(sd));
+		sd_setTemp(sd, hih8120_getTemperature());
+		sd_setHumid(sd, hih8120_getHumidity());
 
+		printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>%f\n", hih8120_getTemperature());
+
+		//uxBits = xEventGroupSetBits(
+		//sd->egroup,    /* The event group being updated. */
+		//BIT_TASK_TEMP_HUMIDITY_READY);	/* The bits being set. */
+
+		printf("[+] TEMPHUM: Measurement complete: Temp: %f, Hum: %f\n", sd_getTemp(sd), sd_getHumid(sd));
 	}
 }
