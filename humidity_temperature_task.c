@@ -13,32 +13,35 @@
 #include<hih8120.h>
 
 #include "shared_data.h"
+#include "configuration_defines.h"
+
+
+void temp_hum_init() {
+	hih8120_driverReturnCode_t ret;
+	for(int i = 0; i < (RETRIES); i++) {
+		if((ret = hih8120_create()) == HIH8120_OK) {
+			puts("[*] TEMPHUM initialized");
+			return;
+		}
+		printf("[!] TEMPHUM Failed to initialize driver: %d, attempt %d\n", ret, i);
+	}
+}
 
 
 void temp_hum_task(void *pvParameters) {
 	shared_data_t *sd = (shared_data_t*) pvParameters;
 
-	puts("[*] TEMP HUM START\n");
+	puts("[*] TEMPHUM task started\n");
 
-	TickType_t xLastWakeTime;
 	const TickType_t xFrequency = 900 / portTICK_PERIOD_MS; //90ms
-	xLastWakeTime = xTaskGetTickCount();
-
-
-	hih8120_driverReturnCode_t ret;
-	while((ret = hih8120_create()) != HIH8120_OK){
-		printf("[!] ERROR CREATING TEMPHUM SENSOR: %d\n", ret);
-		vTaskDelay(50);
-	}
+	TickType_t xLastWakeTime = xTaskGetTickCount();
 
 	for(;;) {
-
-		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 
 		hih8120_driverReturnCode_t ret;
 		if(HIH8120_OK != (ret = hih8120_wakeup()))
 		{
-			printf("[!] HUMTEMP: Error in wake up temp sensor! %d\n", ret);
+			printf("[!] TEMPHUM: Error in wake up temp sensor! %d\n", ret);
 			continue;
 		}
 
@@ -46,7 +49,7 @@ void temp_hum_task(void *pvParameters) {
 
 		if(HIH8120_OK != (ret = hih8120_measure()))
 		{
-			printf("[!] HUMTEMP: Could not perform measurement: %d\n", ret);
+			printf("[!] TEMPHUM: Could not perform measurement: %d\n", ret);
 			continue;
 		}
 
@@ -55,12 +58,12 @@ void temp_hum_task(void *pvParameters) {
 		sd_setTemp(sd, hih8120_getTemperature());
 		sd_setHumid(sd, hih8120_getHumidity());
 
-		printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>%f\n", hih8120_getTemperature());
-
 		//uxBits = xEventGroupSetBits(
 		//sd->egroup,    /* The event group being updated. */
 		//BIT_TASK_TEMP_HUMIDITY_READY);	/* The bits being set. */
 
-		printf("[+] TEMPHUM: Measurement complete: Temp: %f, Hum: %f\n", sd_getTemp(sd), sd_getHumid(sd));
+		printf("[+] TEMPHUM: Measurement completed: t%d, h%d\n", (int) sd_getTemp(sd), (int) sd_getHumid(sd));
+
+		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 	}
 }

@@ -42,6 +42,8 @@ int freeMem() {
 /*-----------------------------------------------------------*/
 void init_task(void* pvParams)
 {
+	shared_data_t* sd = (shared_data_t*) pvParams;
+
 	//lora_driver_resetRn2483(1);
 	//vTaskDelay(2);
 	//lora_driver_resetRn2483(0);
@@ -64,30 +66,23 @@ void init_task(void* pvParams)
 
 	/* printf("SHARED DATA: %d\n", (int)sd); */
 
-	/* hih8120_driverReturnCode_t ret; */
-	/* while((ret = hih8120_create()) != HIH8120_OK){ */
-	/* 	printf("[!] ERROR CREATING TEMPHUM SENSOR: %d\n", ret); */
-	/* 	vTaskDelay(50); */
-	/* } */
-
-
-	/* xTaskCreate( */
-	/* 		temp_hum_task, */
-	/* 		(const portCHAR *)"Get Temperature & Humidity", */
-	/* 		configMINIMAL_STACK_SIZE, */
-	/* 		sd, */
-	/* 		tskIDLE_PRIORITY+1, */
-	/* 		NULL); */
+	xTaskCreate( 
+			temp_hum_task, 
+			(const portCHAR *)"Get Temperature & Humidity", 
+			configMINIMAL_STACK_SIZE, 
+			sd, 
+			tskIDLE_PRIORITY+1, 
+			NULL); 
 
 	//CO2
 
-	/* xTaskCreate( */
-	/* 		getCo2FromSensor_Task_inClass */
-	/* 		,  (const portCHAR *)"Get CO2"  // A name just for humans */
-	/* 		,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater */
-	/* 		,  sd */
-	/* 		,  tskIDLE_PRIORITY+1 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest. */
-	/* 		,  NULL ); */
+	xTaskCreate(
+			co2_task
+			,  (const portCHAR *)"Get CO2"  // A name just for humans
+			,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
+			,  sd
+			,  tskIDLE_PRIORITY+1 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+			,  NULL );
 
 	////Light
 	//xTaskCreate(
@@ -102,16 +97,21 @@ void init_task(void* pvParams)
 
 	while(1) {
 		printf("[*] FREE MEM: %d FREERTOS FREE: %d\n", freeMem(), xPortGetFreeHeapSize());
-		vTaskDelay(10);
+		printf("[*] CURRENT DATA: temp: %d, hum %d, co2: %d, light: %d\n",
+				(int) sd_getTemp(sd),
+				(int) sd_getHumid(sd),
+				(int) sd_getCo2(sd),
+				(int) sd_getLight(sd));
+		vTaskDelay(100);
 	}
 }
 
 
 int main(void)
 {
-	// Set output ports for leds used in the example
+	// Set output ports for leds
 	DDRA |= _BV(DDA0) | _BV(DDA7);
-	// Make it possible to use stdio on COM port 0 (USB) on Arduino board - Setting 57600,8,N,1
+	// Serial IO - Setting 57600,8,N,1
 	stdio_create(ser_USART0);
 
 	// LoraWAN
@@ -122,19 +122,18 @@ int main(void)
 
 	shared_data_t* sd = sd_create();
 
-	hih8120_driverReturnCode_t ret = hih8120_create();
-	printf(">>>> RET: %d\n", ret);
+	temp_hum_init();
+	co2_init();
 
 	xTaskCreate(
 			init_task,
 			(const portCHAR *) "Initialise System",
 			configMINIMAL_STACK_SIZE,
-			NULL,
+			sd,
 			3,
 			NULL);
 
-	vTaskStartScheduler(); // Initialise and run the freeRTOS scheduler. Execution should never return from here.
+	vTaskStartScheduler();
 
-	/* Replace with your application code */
 	while (1) {}
 }
