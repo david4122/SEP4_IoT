@@ -197,10 +197,16 @@
     <None Include="drivers\docs\example\loraWANHandler.c">
       <SubType>compile</SubType>
     </None>
+    <Compile Include="functions.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="humidity_temperature_task.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="humidity_temperature_task.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="functions.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="light_task.c">

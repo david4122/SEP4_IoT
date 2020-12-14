@@ -74,13 +74,18 @@ void lora_task(void *pvParameters) {
 #endif
 
 	char attempt = 1;
-	while((ret = lora_driver_join(LORA_OTAA)) != LORA_ACCEPTED) {
-		printf("[!] LORA: Could not joint network: %d (attempt %d)\n", ret, (int) attempt++);
-		vTaskDelay(200);
-	}
+	// while((ret = lora_driver_join(LORA_OTAA)) != LORA_ACCEPTED) {
+	// 	printf("[!] LORA: Could not joint network: %d (attempt %d)\n", ret, (int) attempt++);
+	// 	vTaskDelay(200);
+	// }
 	puts("[*] LORA: Joined network");
 	
 	vTaskDelay(50);
+
+	xEventGroupSetBits(sd_getEgroup(sd), LORA_READY_BIT);
+	EventBits_t bits;
+	while((bits = xEventGroupWaitBits(sd_getEgroup(sd), SYSTEM_READY, pdFALSE, pdTRUE, portMAX_DELAY)) != SYSTEM_READY);
+	
 	
 	lora_driver_payload_t uplink_payload;
 	uplink_payload.port_no = 1;

@@ -34,6 +34,10 @@ void light_task(void* pvParams) {
 	
 	const TickType_t xFrequency = (LIGHT_INTERVAL);
 	TickType_t xLastWakeTime = xTaskGetTickCount();
+
+	xEventGroupSetBits(sd_getEgroup(sd), LIGHT_READY_BIT);
+	EventBits_t bits;
+	while((bits = xEventGroupWaitBits(sd_getEgroup(sd), SYSTEM_READY, pdFALSE, pdTRUE, portMAX_DELAY)) != SYSTEM_READY);
 	
 	puts("[*] LIGHT: Task started");
 	
