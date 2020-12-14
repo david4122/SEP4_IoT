@@ -34,7 +34,7 @@ void temp_hum_task(void *pvParameters) {
 	xEventGroupSetBits(sd_getEgroup(sd), TEMPHUM_READY_BIT);
 	EventBits_t bits;
 	while((bits = xEventGroupWaitBits(sd_getEgroup(sd), SYSTEM_READY, pdFALSE, pdTRUE, portMAX_DELAY)) != SYSTEM_READY);
-	
+
 	puts("[*] TEMPHUM: task started\n");
 
 

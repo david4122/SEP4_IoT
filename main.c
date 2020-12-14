@@ -48,39 +48,38 @@ void init_task(void* pvParams)
 
 	vTaskDelay(100);
 	puts("[*] INIT STARTED");
-	
-	xTaskCreate( 
-			temp_hum_task, 
-			(const portCHAR *)"Get Temperature & Humidity", 
-			configMINIMAL_STACK_SIZE, 
-			sd, 
-			tskIDLE_PRIORITY+1, 
-			NULL); 
+
+	xTaskCreate(
+			temp_hum_task,
+			(const portCHAR*) "Get Temperature & Humidity",
+			configMINIMAL_STACK_SIZE,
+			sd,
+			tskIDLE_PRIORITY+1,
+			NULL);
 
 
 	xTaskCreate(
-			co2_task
-			,  (const portCHAR *)"Get CO2"
+			co2_task,
+			(const portCHAR*) "Get CO2",
+			configMINIMAL_STACK_SIZE,
+			sd,
+			tskIDLE_PRIORITY + 1,
+			NULL);
+
+	xTaskCreate(
+			light_task
+			,  (const portCHAR*) "Get Visible Raw"
 			,  configMINIMAL_STACK_SIZE
 			,  sd
-			,  tskIDLE_PRIORITY+1
-			,  NULL );
-
-	//Light
-	xTaskCreate(
-		light_task
-	,  (const portCHAR *)"Get Visible Raw"
-	,  configMINIMAL_STACK_SIZE
-	,  sd
-	,  tskIDLE_PRIORITY+1
-	,  NULL );
+			,  tskIDLE_PRIORITY + 1
+			,  NULL);
 
 	xTaskCreate(
 			lora_task,
-			(const portCHAR *)"LRHand",
-			configMINIMAL_STACK_SIZE+200,
+			(const portCHAR*) "LRHand",
+			configMINIMAL_STACK_SIZE + 200,
 			sd,
-			tskIDLE_PRIORITY+2,
+			tskIDLE_PRIORITY + 2,
 			NULL);
 
 	puts("[*] INIT FINISHED");
@@ -117,7 +116,7 @@ int main(void)
 	temp_hum_init();
 	co2_init();
 	light_init();
-	
+
 	lora_init();
 
 	xTaskCreate(

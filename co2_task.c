@@ -35,7 +35,7 @@ void co2_task(void* pvParams) {
 	EventBits_t bits;
 	while((bits = xEventGroupWaitBits(sd_getEgroup(sd), SYSTEM_READY, pdFALSE, pdTRUE, portMAX_DELAY)) != SYSTEM_READY);
 	puts("[*] CO2: Task started");
-	
+
 	mh_z19_returnCode_t ret;
 	uint16_t co2;
 	while(1) {
@@ -54,6 +54,7 @@ void co2_task(void* pvParams) {
 
 		sd_setCo2(sd, co2);
 		printf("[<] CO2: Measurement completed: %d\n", (int) sd_getCo2(sd));
+
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 	}
 }
