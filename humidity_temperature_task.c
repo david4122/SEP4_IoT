@@ -16,14 +16,14 @@
 #include "configuration_defines.h"
 
 
-void temp_hum_init() {
+void temp_hum_init(void) {
 	hih8120_driverReturnCode_t ret;
 	for(int i = 0; i < (RETRIES); i++) {
 		if((ret = hih8120_create()) == HIH8120_OK) {
-			puts("[*] TEMPHUM initialized");
+			puts("[*] TEMPHUM: Initialized");
 			return;
 		}
-		printf("[!] TEMPHUM Failed to initialize driver: %d, attempt %d\n", ret, i);
+		printf("[!] TEMPHUM: Failed to initialize driver: %d, attempt %d\n", ret, i);
 	}
 }
 
@@ -31,9 +31,9 @@ void temp_hum_init() {
 void temp_hum_task(void *pvParameters) {
 	shared_data_t *sd = (shared_data_t*) pvParameters;
 
-	puts("[*] TEMPHUM task started\n");
+	puts("[*] TEMPHUM: task started\n");
 
-	const TickType_t xFrequency = 900 / portTICK_PERIOD_MS; //90ms
+	const TickType_t xFrequency = (TEMPHUM_INTERVAL); //90ms
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 
 	for(;;) {
@@ -62,7 +62,7 @@ void temp_hum_task(void *pvParameters) {
 		//sd->egroup,    /* The event group being updated. */
 		//BIT_TASK_TEMP_HUMIDITY_READY);	/* The bits being set. */
 
-		printf("[+] TEMPHUM: Measurement completed: t%d, h%d\n", (int) sd_getTemp(sd), (int) sd_getHumid(sd));
+		printf("[<] TEMPHUM: Measurement completed: t%d, h%d\n", (int) sd_getTemp(sd), (int) sd_getHumid(sd));
 
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 	}

@@ -9,6 +9,8 @@
 /*Drivers, FreeRTOS, LoRaWAN definition ------------------*/
 #include <FreeRTOSConfig.h>
 
+#include "configuration_defines.h"
+
 #include <ATMEGA_FreeRTOS.h>
 #include <semphr.h>
 #include <event_groups.h>
@@ -39,33 +41,13 @@ int freeMem() {
 	return size;
 }
 
-/*-----------------------------------------------------------*/
 void init_task(void* pvParams)
 {
 	shared_data_t* sd = (shared_data_t*) pvParams;
 
-	//lora_driver_resetRn2483(1);
-	//vTaskDelay(2);
-	//lora_driver_resetRn2483(0);
-	//vTaskDelay(150);
-	//lora_driver_flushBuffers(); 
-	//vTaskDelay(150);
-	//lora_setup();
-
+	vTaskDelay(100);
 	puts("[*] INIT STARTED");
-	printf("[*] FREE MEM: %d FREERTOS FREE: %d\n", freeMem(), xPortGetFreeHeapSize());
-
-
-	//xTaskCreate(
-	//lora_handler_task,
-	//(const portCHAR *)"LRHand",
-	//configMINIMAL_STACK_SIZE+200,
-	//sd,
-	//tskIDLE_PRIORITY+2,
-	//NULL);
-
-	/* printf("SHARED DATA: %d\n", (int)sd); */
-
+	
 	xTaskCreate( 
 			temp_hum_task, 
 			(const portCHAR *)"Get Temperature & Humidity", 
@@ -74,35 +56,41 @@ void init_task(void* pvParams)
 			tskIDLE_PRIORITY+1, 
 			NULL); 
 
-	//CO2
 
 	xTaskCreate(
 			co2_task
-			,  (const portCHAR *)"Get CO2"  // A name just for humans
-			,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
+			,  (const portCHAR *)"Get CO2"
+			,  configMINIMAL_STACK_SIZE
 			,  sd
-			,  tskIDLE_PRIORITY+1 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+			,  tskIDLE_PRIORITY+1
 			,  NULL );
 
-	////Light
-	//xTaskCreate(
-	//getLightFromSensor_Task_inClass
-	//,  (const portCHAR *)"Get Visible Raw"  // A name just for humans
-	//,  configMINIMAL_STACK_SIZE  // This stack size can be checked & adjusted by reading the Stack Highwater
-	//,  sd
-	//,  tskIDLE_PRIORITY+1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-	//,  NULL );
+	//Light
+	xTaskCreate(
+		light_task
+	,  (const portCHAR *)"Get Visible Raw"
+	,  configMINIMAL_STACK_SIZE
+	,  sd
+	,  tskIDLE_PRIORITY+1
+	,  NULL );
+
+	xTaskCreate(
+			lora_task,
+			(const portCHAR *)"LRHand",
+			configMINIMAL_STACK_SIZE+200,
+			sd,
+			tskIDLE_PRIORITY+2,
+			NULL);
 
 	puts("[*] INIT FINISHED");
 
 	while(1) {
-		printf("[*] FREE MEM: %d FREERTOS FREE: %d\n", freeMem(), xPortGetFreeHeapSize());
 		printf("[*] CURRENT DATA: temp: %d, hum %d, co2: %d, light: %d\n",
 				(int) sd_getTemp(sd),
 				(int) sd_getHumid(sd),
 				(int) sd_getCo2(sd),
 				(int) sd_getLight(sd));
-		vTaskDelay(100);
+		vTaskDelay((DIAG_INTERVAL));
 	}
 }
 
@@ -118,19 +106,20 @@ int main(void)
 	hal_create(5);
 	lora_driver_create(1, NULL);
 
-	printf("[*] MAIN FREE MEM: %d\n", freeMem());
-
 	shared_data_t* sd = sd_create();
 
 	temp_hum_init();
 	co2_init();
+	light_init();
+	
+	lora_init();
 
 	xTaskCreate(
 			init_task,
 			(const portCHAR *) "Initialise System",
 			configMINIMAL_STACK_SIZE,
 			sd,
-			3,
+			configMAX_PRIORITIES - 1,
 			NULL);
 
 	vTaskStartScheduler();

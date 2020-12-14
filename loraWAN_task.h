@@ -7,5 +7,6 @@
 #pragma once
 
 
-void lora_setup(void);
-void lora_handler_task( void *pvParameters );
+void lora_init(void);
+
+void lora_task(void *pvParameters );

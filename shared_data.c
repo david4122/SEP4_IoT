@@ -27,7 +27,7 @@ struct shared_data {
 //Pointer is defined in header file, by including the header file you have access to it.
 
 
-shared_data_t* sd_create() {
+shared_data_t* sd_create(void) {
 	shared_data_t* sd = malloc(sizeof(shared_data_t));
 	sd->co2 = 0.0;
 	sd->humid = 0.0;

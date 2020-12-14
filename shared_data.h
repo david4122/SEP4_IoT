@@ -12,7 +12,7 @@
 
 typedef struct shared_data shared_data_t;
 
-shared_data_t* sd_create();
+shared_data_t* sd_create(void);
 
 EventGroupHandle_t sd_getEgroup(shared_data_t* self);
 

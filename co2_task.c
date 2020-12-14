@@ -7,14 +7,16 @@
 
 #include "co2_task.h"
 
-#include "shared_data.h"
+#include "configuration_defines.h"
 
 #include <stdio.h>
 
 #include <mh_z19.h>
 
+#include "shared_data.h"
 
-void co2_init() {
+
+void co2_init(void) {
 	mh_z19_create(ser_USART3, NULL);
 	puts("[*] CO2: Initialized");
 }
@@ -23,9 +25,11 @@ void co2_task(void* pvParams) {
 	shared_data_t* sd = (shared_data_t*) pvParams;
 
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = 900/portTICK_PERIOD_MS;
+	const TickType_t xFrequency = (CO2_INTERVAL);
 	xLastWakeTime = xTaskGetTickCount();
 
+	puts("[*] CO2: Task started");
+	
 	mh_z19_returnCode_t ret;
 	uint16_t co2;
 	while(1) {
@@ -43,7 +47,7 @@ void co2_task(void* pvParams) {
 		}
 
 		sd_setCo2(sd, co2);
-		printf("[+] CO2: Measurement completed: %d\n", (int) sd_getCo2(sd));
-		vTaskDelayUntil(&xLastWakeTime,xFrequency);
+		printf("[<] CO2: Measurement completed: %d\n", (int) sd_getCo2(sd));
+		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 	}
 }
