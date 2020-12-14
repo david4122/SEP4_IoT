@@ -32,6 +32,7 @@
 #include "co2_task.h"
 #include "light_task.h"
 #include "loraWAN_task.h"
+#include "functions.h"
 
 int freeMem() {
 	int size = 8 * 1024;
@@ -84,12 +85,17 @@ void init_task(void* pvParams)
 
 	puts("[*] INIT FINISHED");
 
+	float temp;
 	while(1) {
-		printf("[*] CURRENT DATA: temp: %d, hum %d, co2: %d, light: %d\n",
-				(int) sd_getTemp(sd),
-				(int) sd_getHumid(sd),
-				(int) sd_getCo2(sd),
-				(int) sd_getLight(sd));
+		temp = sd_getTemp(sd);
+		print_arr("[*] CURRENT DATA: temp: ", (uint8_t*) &temp, 4);
+		temp = sd_getHumid(sd);
+		print_arr("[*] CURRENT DATA: hum: ", (uint8_t*) &temp, 4);
+		temp = sd_getCo2(sd);
+		print_arr("[*] CURRENT DATA: co2: ", (uint8_t*) &temp, 4);
+		temp = sd_getLight(sd);
+		print_arr("[*] CURRENT DATA: light: ", (uint8_t*) &temp, 4);
+
 		vTaskDelay((DIAG_INTERVAL));
 	}
 }

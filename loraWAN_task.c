@@ -14,6 +14,7 @@
 #include <lora_driver.h>
 
 #include "shared_data.h"
+#include "functions.h"
 
 
 void print_arr(char* prefix, uint8_t* arr, int len);
@@ -85,39 +86,49 @@ void lora_task(void *pvParameters) {
 	uplink_payload.port_no = 1;
 	uplink_payload.len = 8;
 
+	union {
+		float f;
+		uint8_t bytes[4];
+	} fconv;
+	fconv.f = 0;
+
 	TickType_t xLastWakeTime;
 	const TickType_t xFrequency = (LORA_INTERVAL); // Upload message every 5 minutes
 	xLastWakeTime = xTaskGetTickCount();
 
 	while(1) {
-		uint16_t hum = sd_getHumid(sd);
-		int16_t temp = sd_getTemp(sd);
-		uint16_t co2_ppm = sd_getCo2(sd);
-		uint16_t ligth_ppm = sd_getLight(sd);
 
-		uplink_payload.bytes[0] = hum >> 8;
-		uplink_payload.bytes[1] = hum & 0xFF;
-		uplink_payload.bytes[2] = temp >> 8;
-		uplink_payload.bytes[3] = temp & 0xFF;
-		uplink_payload.bytes[4] = co2_ppm >> 8;
-		uplink_payload.bytes[5] = co2_ppm & 0xFF;
-		uplink_payload.bytes[6] = ligth_ppm >> 8;
-		uplink_payload.bytes[7] = ligth_ppm & 0xFF;
+		fconv.f = sd_getTemp(sd);
+		uplink_payload.bytes[0] = fconv.bytes[0];
+		uplink_payload.bytes[1] = fconv.bytes[1];
+		uplink_payload.bytes[2] = fconv.bytes[2];
+		uplink_payload.bytes[3] = fconv.bytes[3];
+		
+		fconv.f = sd_getHumid(sd);
+		uplink_payload.bytes[4] = fconv.bytes[0];
+		uplink_payload.bytes[5] = fconv.bytes[1];
+		uplink_payload.bytes[6] = fconv.bytes[2];
+		uplink_payload.bytes[7] = fconv.bytes[3];
+
+		fconv.f = sd_getCo2(sd);
+		uplink_payload.bytes[8] = fconv.bytes[0];
+		uplink_payload.bytes[9] = fconv.bytes[1];
+		uplink_payload.bytes[10] = fconv.bytes[2];
+		uplink_payload.bytes[11] = fconv.bytes[3];
+
+		fconv.f = sd_getLight(sd);
+		uplink_payload.bytes[12] = fconv.bytes[0];
+		uplink_payload.bytes[13] = fconv.bytes[1];
+		uplink_payload.bytes[14] = fconv.bytes[2];
+		uplink_payload.bytes[15] = fconv.bytes[3];
+		
+		print_arr("[>] LORA: Uploaded: ", uplink_payload.bytes, 16);
 
 		ret = lora_driver_sendUploadMessage(false, &uplink_payload);
 		if(ret != LORA_MAC_TX_OK && ret != LORA_MAC_RX) {
 			printf("[!] LORA: Failed to upload payload: %d\n", ret);
 		}
-		print_arr("[>] LORA: Uploaded: ", uplink_payload.bytes, 8);
 		
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 	}
-}
-
-void print_arr(char* prefix, uint8_t* arr, int len) {
-	printf("%s ", prefix);
-	for(int i = 0; i < len; i++) {
-		printf("%02X ", arr[i]);
-	}
-	puts("");
 }
