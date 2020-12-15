@@ -23,6 +23,7 @@ struct shared_data {
 
 	SemaphoreHandle_t lock;		// Thread-safety
 	EventGroupHandle_t egroup;	// For synchronization between tasks
+	MessageBufferHandle_t downlink_buffer;	// For downlink
 };
 //Pointer is defined in header file, by including the header file you have access to it.
 
@@ -36,8 +37,9 @@ shared_data_t* sd_create(void) {
 
 	sd->lock = xSemaphoreCreateMutex();
 	sd->egroup = xEventGroupCreate();
+	sd->downlink_buffer = xMessageBufferCreate(sizeof(lora_driver_payload_t));
 
-	if(sd->lock == NULL || sd->egroup == NULL) {
+	if(sd->lock == NULL || sd->egroup == NULL || sd->downlink_buffer == NULL) {
 		puts("[!] Could not initialize shared_data");
 		return NULL;
 	}

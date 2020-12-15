@@ -7,6 +7,6 @@
 #pragma once
 
 
-void lora_init(void);
+void lora_init(shared_data_t* sd);
 
 void lora_task(void *pvParameters );

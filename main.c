@@ -34,6 +34,8 @@
 #include "loraWAN_task.h"
 #include "functions.h"
 
+
+//Delete this when production. 
 int freeMem() {
 	int size = 8 * 1024;
 	uint8_t *b;
@@ -42,8 +44,7 @@ int freeMem() {
 	return size;
 }
 
-void init_task(void* pvParams)
-{
+void init_task(void* pvParams) {
 	shared_data_t* sd = (shared_data_t*) pvParams;
 
 	vTaskDelay(100);
@@ -54,7 +55,7 @@ void init_task(void* pvParams)
 			(const portCHAR*) "Get Temperature & Humidity",
 			configMINIMAL_STACK_SIZE,
 			sd,
-			tskIDLE_PRIORITY+1,
+			tskIDLE_PRIORITY + 1,
 			NULL);
 
 
@@ -81,10 +82,18 @@ void init_task(void* pvParams)
 			sd,
 			tskIDLE_PRIORITY + 2,
 			NULL);
+			
+	xTaskCreate(
+			servo_task,
+			(const portCHAR*) "Servo",
+			configMINIMAL_STACK_SIZE + 200,
+			sd,
+			tskIDLE_PRIORITY + 2,
+			NULL);
 
 	puts("[*] INIT FINISHED");
 
-	float temp;
+	float temp; //it's temporary, not temp. at least it's not a quote. 
 	while(1) {
 		temp = sd_getTemp(sd);
 		print_arr("[*] CURRENT DATA: temp: ", (uint8_t*) &temp, 4);
@@ -94,6 +103,7 @@ void init_task(void* pvParams)
 		print_arr("[*] CURRENT DATA: co2: ", (uint8_t*) &temp, 4);
 		temp = sd_getLight(sd);
 		print_arr("[*] CURRENT DATA: light: ", (uint8_t*) &temp, 4);
+		
 
 		vTaskDelay((DIAG_INTERVAL));
 	}
@@ -116,8 +126,9 @@ int main(void)
 	temp_hum_init();
 	co2_init();
 	light_init();
+	servo_init();
 
-	lora_init();
+	lora_init(sd);
 
 	xTaskCreate(
 			init_task,
