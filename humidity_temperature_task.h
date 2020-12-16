@@ -6,7 +6,6 @@
  */ 
 #pragma once
 
-#define BIT_TASK_TEMP_HUMIDITY_READY (1 << 0) 	// TODO move that into config file, has to be visible in other tasks for sync purposes
 
 
 void temp_hum_init(void);

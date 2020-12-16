@@ -63,10 +63,6 @@ void temp_hum_task(void *pvParameters) {
 		sd_setTemp(sd, hih8120_getTemperature());
 		sd_setHumid(sd, hih8120_getHumidity());
 
-		//uxBits = xEventGroupSetBits(
-		//sd->egroup,    /* The event group being updated. */
-		//BIT_TASK_TEMP_HUMIDITY_READY);	/* The bits being set. */
-
 		printf("[<] TEMPHUM: Measurement completed: t%d, h%d\n", (int) sd_getTemp(sd), (int) sd_getHumid(sd));
 
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);

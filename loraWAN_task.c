@@ -74,10 +74,10 @@ void lora_task(void *pvParameters) {
 #endif
 
 	char attempt = 1;
-	// while((ret = lora_driver_join(LORA_OTAA)) != LORA_ACCEPTED) {
-	// 	printf("[!] LORA: Could not joint network: %d (attempt %d)\n", ret, (int) attempt++);
-	// 	vTaskDelay(200);
-	// }
+	 while((ret = lora_driver_join(LORA_OTAA)) != LORA_ACCEPTED) {
+	 	printf("[!] LORA: Could not joint network: %d (attempt %d)\n", ret, (int) attempt++);
+	 	vTaskDelay(200);
+	 }
 	puts("[*] LORA: Joined network");
 	
 	vTaskDelay(50);
@@ -89,7 +89,7 @@ void lora_task(void *pvParameters) {
 	
 	lora_driver_payload_t uplink_payload;
 	uplink_payload.port_no = 1;
-	uplink_payload.len = 8;
+	uplink_payload.len = 16;
 
 	union {
 		float f;
@@ -127,7 +127,7 @@ void lora_task(void *pvParameters) {
 		uplink_payload.bytes[14] = fconv.bytes[2];
 		uplink_payload.bytes[15] = fconv.bytes[3];
 		
-		print_arr("[>] LORA: Uploaded: ", uplink_payload.bytes, 16);
+		print_arr("[>] LORA: Uploading: ", uplink_payload.bytes, 16);
 
 		ret = lora_driver_sendUploadMessage(false, &uplink_payload);
 		if(ret != LORA_MAC_TX_OK && ret != LORA_MAC_RX) {
