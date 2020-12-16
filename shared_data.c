@@ -6,7 +6,6 @@
  */
 
 #include "shared_data.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -14,6 +13,9 @@
 
 #include<semphr.h>
 #include<event_groups.h>
+#include <message_buffer.h>
+#include <ihal.h>
+#include <lora_driver.h>
 
 struct shared_data {
 	float temp;
@@ -37,7 +39,7 @@ shared_data_t* sd_create(void) {
 
 	sd->lock = xSemaphoreCreateMutex();
 	sd->egroup = xEventGroupCreate();
-	sd->downlink_buffer = xMessageBufferCreate(sizeof(lora_driver_payload_t));
+	sd->downlink_buffer = xMessageBufferCreate(sizeof(sd_getMessageBuffer(sd)));
 
 	if(sd->lock == NULL || sd->egroup == NULL || sd->downlink_buffer == NULL) {
 		puts("[!] Could not initialize shared_data");
@@ -47,7 +49,9 @@ shared_data_t* sd_create(void) {
 	return sd;
 }
 
-
+MessageBufferHandle_t sd_getMessageBuffer(shared_data_t* self) {
+	return self->downlink_buffer;
+}
 EventGroupHandle_t sd_getEgroup(shared_data_t* self) {
 	return self->egroup;
 }

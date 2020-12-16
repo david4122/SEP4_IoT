@@ -18,7 +18,7 @@
 
 void lora_init(shared_data_t* sd) {
 	hal_create(configMAX_PRIORITIES - 1);
-	lora_driver_create(ser_USART1, sd->downlink_buffer);
+	lora_driver_create(ser_USART1, sd_getMessageBuffer(sd));
 	puts("[*] LORA: Initialized");
 }
 

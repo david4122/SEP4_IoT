@@ -24,8 +24,6 @@
 #define SERVO_INTERVAL	420
 
 #define SERVO_PORT 0
-
-
 #define	LORA_RETRY_CONNECTION_DELAY	100
 
 #define	TEMPHUM_READY_BIT	(1 << 0)

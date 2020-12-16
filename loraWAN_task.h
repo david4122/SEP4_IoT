@@ -3,7 +3,8 @@
  *
  * Created: 11/14/2020 12:07:13 AM
  *  Author: semin
- */ 
+ */
+#include "shared_data.h"
 #pragma once
 
 

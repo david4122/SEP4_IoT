@@ -33,6 +33,7 @@
 #include "light_task.h"
 #include "loraWAN_task.h"
 #include "functions.h"
+#include "servo_task.h"
 
 
 //Delete this when production. 

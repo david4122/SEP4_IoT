@@ -6,8 +6,13 @@
  */ 
  #include "servo_task.h"
  #include "configuration_defines.h"
- 
+ #include "shared_data.h"
  #include <rc_servo.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <lora_driver.h>
+ 
+ #include <ihal.h>
  
  
  void servo_init(void) {
@@ -24,11 +29,14 @@
 	 xEventGroupSetBits(sd_getEgroup(sd), SERVO_READY_BIT);
 	 EventBits_t bits;
 	 while((bits = xEventGroupWaitBits(sd_getEgroup(sd), SYSTEM_READY, pdFALSE, pdTRUE, portMAX_DELAY)) != SYSTEM_READY);
+	 
 	 puts("[*] SERVO: Task started");
+	 	vTaskDelayUntil(&xLastWakeTime, xFrequency);
+	 
 	 lora_driver_payload_t payload;
 	while(1) {
 		
-		xMessageBufferReceive(sd->downlink_buffer, &payload, sizeof(payload), portMAX_DELAY);
+		xMessageBufferReceive(sd_getMessageBuffer(sd), &payload, sizeof(payload), portMAX_DELAY);
 		
 		if(payload.len == 1) {
 			if(payload.bytes[0]) {
