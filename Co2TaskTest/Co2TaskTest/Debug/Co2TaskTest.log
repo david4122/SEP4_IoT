@@ -1,0 +1,3 @@
+﻿  Co2Test.cpp
+C:\Users\Zhang\source\repos\Co2TaskTest\Co2TaskTest\Co2Test.cpp(47,27): warning C4244: “初始化”: 从“double”转换到“uint16_t”，可能丢失数据
+  Co2TaskTest.vcxproj -> C:\Users\Zhang\source\repos\Co2TaskTest\Debug\Co2TaskTest.exe
