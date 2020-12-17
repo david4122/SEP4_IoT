@@ -16,12 +16,9 @@
 #include "shared_data.h"
 #include "functions.h"
 
-
-void print_arr(char* prefix, uint8_t* arr, int len);
-
-void lora_init(void) {
+void lora_init(shared_data_t* sd) {
 	hal_create(configMAX_PRIORITIES - 1);
-	lora_driver_create(ser_USART1, NULL);
+	lora_driver_create(ser_USART1, sd_getMessageBuffer(sd));
 	puts("[*] LORA: Initialized");
 }
 
@@ -74,10 +71,10 @@ void lora_task(void *pvParameters) {
 #endif
 
 	char attempt = 1;
-	 while((ret = lora_driver_join(LORA_OTAA)) != LORA_ACCEPTED) {
-	 	printf("[!] LORA: Could not joint network: %d (attempt %d)\n", ret, (int) attempt++);
-	 	vTaskDelay(200);
-	 }
+	while((ret = lora_driver_join(LORA_OTAA)) != LORA_ACCEPTED) {
+		printf("[!] LORA: Could not joint network: %d (attempt %d)\n", ret, (int) attempt++);
+		vTaskDelay(200);
+	}
 	puts("[*] LORA: Joined network");
 	
 	vTaskDelay(50);
@@ -98,7 +95,7 @@ void lora_task(void *pvParameters) {
 	fconv.f = 0;
 
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = (LORA_INTERVAL); // Upload message every 5 minutes
+	const TickType_t xFrequency = (LORA_INTERVAL);
 	xLastWakeTime = xTaskGetTickCount();
 
 	while(1) {

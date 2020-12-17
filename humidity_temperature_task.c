@@ -1,8 +1,8 @@
 /*
- * temperature_task.c
+ * humidity_emperature_task.c
  *
  * Created: 11/13/2020 12:55:59 PM
- *  Author: IoT
+ *  Author: Matey Matev & Dalius Seminauskas
  */ 
 
 #include "humidity_temperature_task.h"
