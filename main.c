@@ -6,7 +6,6 @@
  */
 
 
-/*Drivers, FreeRTOS, LoRaWAN definition ------------------*/
 #include <FreeRTOSConfig.h>
 
 #include "configuration_defines.h"
@@ -32,18 +31,10 @@
 #include "co2_task.h"
 #include "light_task.h"
 #include "loraWAN_task.h"
-#include "functions.h"
 #include "servo_task.h"
 
+#include "functions.h"
 
-//Delete this when production. 
-int freeMem() {
-	int size = 8 * 1024;
-	uint8_t *b;
-	while(size > 0 && (b = malloc(--size)) == NULL);
-	free(b);
-	return size;
-}
 
 void init_task(void* pvParams) {
 	shared_data_t* sd = (shared_data_t*) pvParams;

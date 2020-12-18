@@ -12,3 +12,11 @@ void print_arr(char* prefix, uint8_t* arr, int len) {
 	}
 	puts("");
 }
+
+int freeMem() {
+	int size = 8 * 1024;
+	uint8_t *b;
+	while(size > 0 && (b = malloc(--size)) == NULL);
+	free(b);
+	return size;
+}
