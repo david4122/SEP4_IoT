@@ -9,6 +9,6 @@
 
 #pragma once
 
-void print_arr(char* prefix, uint8_t* arr, int len);
+void print_arr(const char* prefix, uint8_t* arr, int len);
 
 int freeMem();

@@ -10,12 +10,14 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <avr/pgmspace.h>
 
 #include <ihal.h>
 #include <rc_servo.h>
 #include <lora_driver.h>
 
 #include "shared_data.h"
+
 
 void servo_init(void) {
 	rc_servo_create(); //taken from detailed description
@@ -33,7 +35,7 @@ void servo_task(void *pvParams) {
 	while((bits = xEventGroupWaitBits(sd_getEgroup(sd),
 					SYSTEM_READY, pdFALSE, pdTRUE, portMAX_DELAY)) != SYSTEM_READY);
 
-	puts("[*] SERVO: Task started");
+	puts_P(PSTR("[*] SERVO: Task started"));
 
 	lora_driver_payload_t payload;
 	while(1) {
@@ -46,6 +48,6 @@ void servo_task(void *pvParams) {
 			} else {
 				rc_servo_setPosition(SERVO_PORT, -100);
 			}
-		}	
+		}
 	}
 }

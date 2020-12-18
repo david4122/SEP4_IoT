@@ -4,13 +4,14 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <avr/pgmspace.h>
 
-void print_arr(char* prefix, uint8_t* arr, int len) {
-	printf("%s ", prefix);
+void print_arr(const char* prefix, uint8_t* arr, int len) {
+	printf_P(PSTR("%s "), prefix);
 	for(int i = 0; i < len; i++) {
-		printf("%02X ", arr[i]);
+		printf_P(PSTR("%02X "), arr[i]);
 	}
-	puts("");
+	puts_P(PSTR(""));
 }
 
 int freeMem() {

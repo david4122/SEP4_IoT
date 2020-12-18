@@ -7,8 +7,9 @@
 
 #include "humidity_temperature_task.h"
 
-#include<stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <avr/pgmspace.h>
 
 #include<hih8120.h>
 
@@ -20,10 +21,10 @@ void temp_hum_init(void) {
 	hih8120_driverReturnCode_t ret;
 	for(int i = 0; i < (RETRIES); i++) {
 		if((ret = hih8120_create()) == HIH8120_OK) {
-			puts("[*] TEMPHUM: Initialized");
+			puts_P(PSTR("[*] TEMPHUM: Initialized"));
 			return;
 		}
-		printf("[!] TEMPHUM: Failed to initialize driver: %d, attempt %d\n", ret, i);
+		printf_P(PSTR("[!] TEMPHUM: Failed to initialize driver: %d, attempt %d\n"), ret, i);
 	}
 }
 
@@ -36,7 +37,7 @@ void temp_hum_task(void *pvParameters) {
 	while((bits = xEventGroupWaitBits(sd_getEgroup(sd),
 					SYSTEM_READY, pdFALSE, pdTRUE, portMAX_DELAY)) != SYSTEM_READY);
 
-	puts("[*] TEMPHUM: task started\n");
+	puts_P(PSTR("[*] TEMPHUM: task started\n"));
 
 
 	const TickType_t xFrequency = (TEMPHUM_INTERVAL); //90ms
@@ -47,7 +48,7 @@ void temp_hum_task(void *pvParameters) {
 		hih8120_driverReturnCode_t ret;
 		if(HIH8120_OK != (ret = hih8120_wakeup()))
 		{
-			printf("[!] TEMPHUM: Error in wake up temp sensor! %d\n", ret);
+			printf_P(PSTR("[!] TEMPHUM: Error in wake up temp sensor! %d\n"), ret);
 			continue;
 		}
 
@@ -55,7 +56,7 @@ void temp_hum_task(void *pvParameters) {
 
 		if(HIH8120_OK != (ret = hih8120_measure()))
 		{
-			printf("[!] TEMPHUM: Could not perform measurement: %d\n", ret);
+			printf_P(PSTR("[!] TEMPHUM: Could not perform measurement: %d\n"), ret);
 			continue;
 		}
 
@@ -64,7 +65,7 @@ void temp_hum_task(void *pvParameters) {
 		sd_setTemp(sd, hih8120_getTemperature());
 		sd_setHumid(sd, hih8120_getHumidity());
 
-		printf("[<] TEMPHUM: Measurement completed: t%d, h%d\n", (int) sd_getTemp(sd), (int) sd_getHumid(sd));
+		printf_P(PSTR("[<] TEMPHUM: Measurement completed: t%d, h%d\n"), (int) sd_getTemp(sd), (int) sd_getHumid(sd));
 
 		xEventGroupSetBits(sd_getEgroup(sd), TEMPHUM_READY_BIT);
 		while((bits = xEventGroupWaitBits(sd_getEgroup(sd),

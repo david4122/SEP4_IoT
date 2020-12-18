@@ -4,8 +4,6 @@
  * Author : IoT Group
  *
  */
-
-
 #include <FreeRTOSConfig.h>
 
 #include "configuration_defines.h"
@@ -14,24 +12,26 @@
 #include <semphr.h>
 #include <event_groups.h>
 #include <stdio_driver.h>
-#include <serial.h>
 
+#include <avr/io.h>
+#include <avr/pgmspace.h>
+#include <avr/sfr_defs.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <avr/io.h>
-#include <avr/sfr_defs.h>
+
 #include <hal_defs.h>
 #include <ihal.h>
 #include <lora_driver.h>
+#include <serial.h>
 #include <stdio_driver.h>
 
-#include "hih8120.h"
-#include "shared_data.h"
-#include "humidity_temperature_task.h"
 #include "co2_task.h"
+#include "hih8120.h"
+#include "humidity_temperature_task.h"
 #include "light_task.h"
 #include "loraWAN_task.h"
 #include "servo_task.h"
+#include "shared_data.h"
 
 #include "functions.h"
 
@@ -39,11 +39,12 @@
 void init_task(void* pvParams) {
 	shared_data_t* sd = (shared_data_t*) pvParams;
 
-	puts("[*] INIT STARTED");
+	vTaskDelay(100);
+	puts_P(PSTR("[*] INIT STARTED"));
 
 	xTaskCreate(
 			temp_hum_task,
-			(const portCHAR*) "Get Temperature & Humidity",
+			(const portCHAR*) "TMP",
 			configMINIMAL_STACK_SIZE,
 			sd,
 			tskIDLE_PRIORITY + 1,
@@ -51,23 +52,23 @@ void init_task(void* pvParams) {
 
 	xTaskCreate(
 			co2_task,
-			(const portCHAR*) "Get CO2",
+			(const portCHAR*) "CO2",
 			configMINIMAL_STACK_SIZE,
 			sd,
 			tskIDLE_PRIORITY + 1,
 			NULL);
 
 	xTaskCreate(
-			light_task
-			,  (const portCHAR*) "Get Visible Raw"
-			,  configMINIMAL_STACK_SIZE
-			,  sd
-			,  tskIDLE_PRIORITY + 1
-			,  NULL);
+			light_task,
+			(const portCHAR*) "LGH",
+			configMINIMAL_STACK_SIZE,
+			sd,
+			tskIDLE_PRIORITY + 1,
+			NULL);
 
 	xTaskCreate(
 			lora_task,
-			(const portCHAR*) "LRHand",
+			(const portCHAR*) "LRA",
 			configMINIMAL_STACK_SIZE + 200,
 			sd,
 			tskIDLE_PRIORITY + 2,
@@ -75,13 +76,13 @@ void init_task(void* pvParams) {
 
 	xTaskCreate(
 			servo_task,
-			(const portCHAR*) "Servo",
+			(const portCHAR*) "SRV",
 			configMINIMAL_STACK_SIZE + 200,
 			sd,
 			tskIDLE_PRIORITY + 2,
 			NULL);
 
-	puts("[*] INIT FINISHED");
+	puts_P(PSTR("[*] INIT FINISHED"));
 
 	float temp; //it's temporary, not temp. at least it's not a quote. 
 	EventBits_t bits;
@@ -92,9 +93,6 @@ void init_task(void* pvParams) {
 		while((bits = xEventGroupWaitBits(sd_getEgroup(sd),
 						SENSORS_READY, pdTRUE, pdTRUE, portMAX_DELAY)) != SENSORS_READY);	// clear sensors bits
 
-		while((bits = xEventGroupWaitBits(sd_getEgroup(sd),
-						LORA_READY_BIT, pdTRUE, pdTRUE, portMAX_DELAY)) != LORA_READY_BIT);	// clear lora bit
-
 		temp = sd_getTemp(sd);
 		print_arr("[*] CURRENT DATA: temp: ", (uint8_t*) &temp, 4);
 		temp = sd_getHumid(sd);
@@ -103,6 +101,9 @@ void init_task(void* pvParams) {
 		print_arr("[*] CURRENT DATA: co2: ", (uint8_t*) &temp, 4);
 		temp = sd_getLight(sd);
 		print_arr("[*] CURRENT DATA: light: ", (uint8_t*) &temp, 4);
+
+		while((bits = xEventGroupWaitBits(sd_getEgroup(sd),
+						LORA_READY_BIT, pdTRUE, pdTRUE, portMAX_DELAY)) != LORA_READY_BIT);	// clear lora bit
 	}
 }
 

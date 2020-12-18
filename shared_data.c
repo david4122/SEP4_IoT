@@ -6,14 +6,17 @@
  */
 
 #include "shared_data.h"
+
 #include <stdlib.h>
 #include <stdio.h>
+#include <avr/pgmspace.h>
 
 #include<ATMEGA_FreeRTOS.h>
 
-#include<semphr.h>
-#include<event_groups.h>
+#include <semphr.h>
+#include <event_groups.h>
 #include <message_buffer.h>
+
 #include <ihal.h>
 #include <lora_driver.h>
 
@@ -27,7 +30,6 @@ struct shared_data {
 	EventGroupHandle_t egroup;	// For synchronization between tasks
 	MessageBufferHandle_t downlink_buffer;	// For downlink
 };
-//Pointer is defined in header file, by including the header file you have access to it.
 
 
 shared_data_t* sd_create(void) {
@@ -42,7 +44,7 @@ shared_data_t* sd_create(void) {
 	sd->downlink_buffer = xMessageBufferCreate(sizeof(sd_getMessageBuffer(sd)));
 
 	if(sd->lock == NULL || sd->egroup == NULL || sd->downlink_buffer == NULL) {
-		puts("[!] Could not initialize shared_data");
+		puts_P(PSTR("[!] Could not initialize shared_data"));
 		return NULL;
 	}
 
