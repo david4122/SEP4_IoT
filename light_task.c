@@ -59,6 +59,10 @@ void light_task(void* pvParams) {
 		sd_setLight(sd, res);
 		printf("[<] LIGHT: Measurement completed: %d\n", (int) res);
 
+		xEventGroupSetBits(sd_getEgroup(sd), LIGHT_READY_BIT);
+		while((bits = xEventGroupWaitBits(sd_getEgroup(sd),
+						LORA_READY_BIT, pdFALSE, pdTRUE, portMAX_DELAY)) != LORA_READY_BIT);
+
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 	}
 }

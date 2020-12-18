@@ -33,7 +33,8 @@ void temp_hum_task(void *pvParameters) {
 
 	xEventGroupSetBits(sd_getEgroup(sd), TEMPHUM_READY_BIT);
 	EventBits_t bits;
-	while((bits = xEventGroupWaitBits(sd_getEgroup(sd), SYSTEM_READY, pdFALSE, pdTRUE, portMAX_DELAY)) != SYSTEM_READY);
+	while((bits = xEventGroupWaitBits(sd_getEgroup(sd),
+					SYSTEM_READY, pdFALSE, pdTRUE, portMAX_DELAY)) != SYSTEM_READY);
 
 	puts("[*] TEMPHUM: task started\n");
 
@@ -64,6 +65,10 @@ void temp_hum_task(void *pvParameters) {
 		sd_setHumid(sd, hih8120_getHumidity());
 
 		printf("[<] TEMPHUM: Measurement completed: t%d, h%d\n", (int) sd_getTemp(sd), (int) sd_getHumid(sd));
+
+		xEventGroupSetBits(sd_getEgroup(sd), TEMPHUM_READY_BIT);
+		while((bits = xEventGroupWaitBits(sd_getEgroup(sd),
+						LORA_READY_BIT, pdFALSE, pdTRUE, portMAX_DELAY)) != LORA_READY_BIT);
 
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 	}

@@ -39,7 +39,6 @@
 void init_task(void* pvParams) {
 	shared_data_t* sd = (shared_data_t*) pvParams;
 
-	vTaskDelay(100);
 	puts("[*] INIT STARTED");
 
 	xTaskCreate(
@@ -49,7 +48,6 @@ void init_task(void* pvParams) {
 			sd,
 			tskIDLE_PRIORITY + 1,
 			NULL);
-
 
 	xTaskCreate(
 			co2_task,
@@ -74,7 +72,7 @@ void init_task(void* pvParams) {
 			sd,
 			tskIDLE_PRIORITY + 2,
 			NULL);
-			
+
 	xTaskCreate(
 			servo_task,
 			(const portCHAR*) "Servo",
@@ -86,7 +84,17 @@ void init_task(void* pvParams) {
 	puts("[*] INIT FINISHED");
 
 	float temp; //it's temporary, not temp. at least it's not a quote. 
+	EventBits_t bits;
 	while(1) {
+		while((bits = xEventGroupWaitBits(sd_getEgroup(sd),
+						SYSTEM_READY, pdTRUE, pdTRUE, portMAX_DELAY)) != SYSTEM_READY);		// clear after init
+
+		while((bits = xEventGroupWaitBits(sd_getEgroup(sd),
+						SENSORS_READY, pdTRUE, pdTRUE, portMAX_DELAY)) != SENSORS_READY);	// clear sensors bits
+
+		while((bits = xEventGroupWaitBits(sd_getEgroup(sd),
+						LORA_READY_BIT, pdTRUE, pdTRUE, portMAX_DELAY)) != LORA_READY_BIT);	// clear lora bit
+
 		temp = sd_getTemp(sd);
 		print_arr("[*] CURRENT DATA: temp: ", (uint8_t*) &temp, 4);
 		temp = sd_getHumid(sd);
@@ -95,15 +103,11 @@ void init_task(void* pvParams) {
 		print_arr("[*] CURRENT DATA: co2: ", (uint8_t*) &temp, 4);
 		temp = sd_getLight(sd);
 		print_arr("[*] CURRENT DATA: light: ", (uint8_t*) &temp, 4);
-		
-
-		vTaskDelay((DIAG_INTERVAL));
 	}
 }
 
 
-int main(void)
-{
+int main(void) {
 	// Set output ports for leds
 	DDRA |= _BV(DDA0) | _BV(DDA7);
 	// Serial IO - Setting 57600,8,N,1
